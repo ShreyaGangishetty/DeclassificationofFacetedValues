@@ -39,22 +39,37 @@ function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
 /**
  * This function is used to perform basic operations of two operands, in the line of x+2, or x+y, where x and/or y
  * can be anything on which such operations would normally work, or where x and/or y are FacetedValues. In all cases
- * the original FacetedValue(s) remain unmutated, with the operation producing a new FacetedValue. Examples:
+ * the original FacetedValue(s) remain unmutated, with the operation producing a new FacetedValue.
+ *
+ * For convenience there is also a ':' operator not found by default in Javascript, which concatenates two
+ * faceted arrays. There is an example below.
  *
  * @example
- * // x * 42, where x is a FacetedValue, to be multiplied by 42
- * x.binaryOps('*', 42);
+ * var x = new FacetedValue('A', 1, 2);
+ * // x * 42
+ * var y = x.binaryOps('*', 42);
+ * console.log(y); // <A ? 42 : 94>
  *
  * @example
- * // 'result = ' + x * 42, where x is a FacetedValue to be multiplied by 42 and then concatenated with a string:
- * x.binaryOps('*', 42).binaryOps('+', 'result = ', true);
+ * // 'result = ' + (x * 42)
+ * y = x.binaryOps('*', 42).binaryOps('+', 'result = ', true);
+ * console.log(y); // <A ? "result = 42"  : "result = 94">
  *
  * @example
- * // The above, with an arbitrary FacetedValue y instead of 42:
- * x.binaryOps('*', y).binaryOps('+', 'result = ', true);
+ * // 'result = ' + (x * z)
+ * var z = new FacetedValue('B', 3, 5);
+ * y = x.binaryOps('*', z).binaryOps('+', 'result = ', true);
+ * console.log(y); // <A ? <B ? 3 : 5> : <B ? 6 : 10>>
+ *
+ * @example
+ * // Concatenating two faceted lists
+ * var l1 = new FacetedValue('A', [1], [3]);
+ * var l2 = new FacetedValue('A', [5], [7]);
+ * var l3 = l1.binaryOps(':', l2);
+ * console.log(l3); // <'A' ? [1,5] : [3,7]>
  *
  * @param {string} operator -- One of the following operations to be performed with this FacetedValue as an operand:
- *       ['+','-','*','/','^','&','|','%','>','<','<=','>=','==','!=','&&','||','!==','===','>>','<<','in','instanceof']
+ *       ['+','-','*','/','^','&','|','%','>','<','<=','>=','==','!=','&&','||','!==','===','>>','<<','in','instanceof',':']
  * @param {*} operand -- The other operand with which to perform the operation
  * @param {boolean} [operandIsOnLeft] -- True to execute the operation as `operand operator this`, falsey to execute
  *                                       as `this operator operand`. In some cases this makes a very large difference
@@ -83,14 +98,14 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
 
     if (operandIsOnLeft)
         return biOpWithLeftsidePrimitive(operator, operand);
-    return biOpWithRightsidePrimitive();
+    return biOpWithRightsidePrimitive(operator, operand);
 };
 
 /**
  * This function is used to perform basic operations of one operand, such as ++x, !x, and so on where x is a
  * FacetedValue. In most cases the original FacetedValue remains unmutated. The exceptions are the increment "++" and
  * decrement "--" operators, which mutate the original FacetedValue so as to remain inline with the behavior of
- * increment and decrement on primitives. Examples:
+ * increment and decrement on primitives.
  *
  * @example
  * // ++x, incrementing all the facets of x and then returning the result:
@@ -99,6 +114,9 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
  * @example
  * // x--, decrementing all facets of x and returning a new FacetedValue with the original facets:
  * x.unaryOps('--');
+ *
+ * @example
+ * var
  *
  * @param {string} operator
  * @param {boolean} [operatorIsOnLeft]
@@ -137,8 +155,8 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
 /**
  * TODO: Write description
  *
- * @param facetList
- * @returns {*|{}}
+ * @param {Array<String>} facetList
+ * @returns {*}
  */
 FacetedValue.prototype.getFacetVisibleVersus = function getFacetVisibleVersus(facetList){
     var v = this.rightValue;
@@ -185,7 +203,9 @@ FacetedValue.prototype.equals = function equals(value){
  * function values, in order to invoke those functions. It is inadvisable for these functions to return values of
  * different types.
  *
- * There is another version of this function for minor convenience
+ * There is another version of this function for minor convenience.
+ * @see FacetedValue#apply_helper
+ * @see Function#apply
  *
  * @example
  * var foo1 = function(x, y){ return x + y; };
@@ -194,13 +214,24 @@ FacetedValue.prototype.equals = function equals(value){
  * var facetedResult = facetedFunction.apply(this, [3, 5]);
  * console.log('result: ' + facetedResult.toString());  // result: <bleagh ? 8 : 15>
  *
- * @param {object} [context] -- an object that will be reference by the "this" keyword
- * @param {Array<*>} [args] -- a list of arguments that will be passed to the functions
+ * @param {object|FacetedValue} [thisArg] -- an object that will be reference by the `this` keyword
+ * @param {Array<*>} [argArray] -- a list of arguments that will be passed to the functions
  * @returns {FacetedValue}
+ * @throws {Error} -- If the FacetedValue does not contain functions
  */
-FacetedValue.prototype.apply = function apply(context, args){
-    if (this.valuesAreThemselvesFaceted || typeof this.leftValue === "function")
-        return new FacetedValue(this.view, this.leftValue.apply(context, args), this.rightValue.apply(context, args));
+FacetedValue.prototype.apply = function apply(thisArg, argArray){
+    if (thisArg instanceof FacetedValue) {
+        return new FacetedValue(thisArg.view,
+            this.apply(this.leftValue, argArray),
+            this.apply(this.rightValue, argArray)
+        );
+    }
+    if (this.valuesAreThemselvesFaceted || typeof this.leftValue === "function") {
+        return new FacetedValue(this.view,
+            FacetedValue.invokeFunction(this.leftValue, thisArg, argArray),
+            FacetedValue.invokeFunction(this.rightValue, thisArg, argArray)
+        );
+    }
     throw new Error("This FacetedValue is not one of functions.");
 };
 
@@ -218,12 +249,75 @@ FacetedValue.prototype.apply = function apply(context, args){
  * var facetedResult = facetedFunction.apply_helper(this, 3, 5);
  * console.log('result: ' + facetedResult.toString());  // result: <bleagh ? 8 : 15>
  *
- * @param [context]
- * @param [args]
+ * @param {Object|FacetedValue} thisArg
  * @returns {FacetedValue}
  */
-FacetedValue.prototype.apply_helper = function apply_helper(context, moreArgs){
-    return this.apply(context, arguments.slice(1));
+FacetedValue.prototype.apply_helper = function apply_helper(thisArg){
+    return this.apply(thisArg, arguments.slice(1));
+};
+
+/**
+ * When one or more FacetedValues are to be given as arguments to a function that is not itself FacetedValues-aware,
+ * it is best practice (and sometimes even necessary) to give the function to this method instead so that the facets
+ * can be unpacked correctly.
+ *
+ * This method is directly related to {@link Function#apply}.
+ *
+ * @example
+ * var facetedNumber = new FacetedValue("A", 25, 36);
+ * var facetedSqrt = FacetedValue.invokeFunction(Math.sqrt, this, [facetedNumber]);
+ * console.log(facetedSqrt); // output: <A ? 5 : 6>
+ *
+ * @param {function} lambda
+ * @param {object|FacetedValue} thisArg
+ * @param {Array<*>} argArray
+ * @returns {FacetedValue}
+ */
+FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray){
+    var leadingNonFacetedArgs = [];
+    var haveNotYetEncounteredFacetedValue = true;
+    var facetedArguments;
+    for (var i = 0; i < argArray.length(); i++){
+        var currentArg = argArray[i];
+        if (haveNotYetEncounteredFacetedValue){
+            if (currentArg instanceof FacetedValue) {
+                haveNotYetEncounteredFacetedValue = false;
+                facetedArguments = currentArg.toFacetedArray().binaryOps(':', leadingNonFacetedArgs, true);
+            }
+            else
+                leadingNonFacetedArgs.push(currentArg);
+        }
+        else {
+            facetedArguments = facetedArguments.binaryOps(':',
+                (currentArg instanceof FacetedValue) ? currentArg.toFacetedArray() : [currentArg]
+            );
+        }
+    }
+    if (haveNotYetEncounteredFacetedValue)
+        lambda.apply(thisArg, argArray);
+    else {
+        return new FacetedValue(facetedArguments.view,
+            invokeFunction(lambda, thisArg, facetedArguments.leftValue),
+            invokeFunction(lambda, thisArg, facetedArguments.rightValue));
+    }
+};
+
+/**
+ * Returns a new FacetedValue which contain the same facets and the same values, however, each of those values are
+ * contained inside an array.
+ *
+ * @example
+ * var x = new FacetedValue('A', 3, 5);
+ * var y = x.toFacetedArray();
+ * console.log(x); // <A ? 3 : 5>
+ * console.log(y); // <A > [3] : [5]>
+ *
+ * @returns {FacetedValue}
+ */
+FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
+    if (this.valuesAreThemselvesFaceted)
+        return new FacetedValue(this.view, this.leftValue.toFacetedArray(), this.rightValue.toFacetedArray());
+    return new FacetedValue(this.view, [this.leftValue], [this.rightValue]);
 };
 
 /* ************************** Helper functions ******************************************** */
@@ -279,6 +373,7 @@ function biOpWithLeftsidePrimitive(operation, operand){
         case '<<'         : newLeft = operand <<         this.leftValue; newRight = operand <<         this.rightValue; break;
         case 'in'         : newLeft = operand in         this.leftValue; newRight = operand in         this.rightValue; break;
         case 'instanceof' : newLeft = operand instanceof this.leftValue; newRight = operand instanceof this.rightValue; break;
+        case ':'          : newLeft = operand.concat(this.leftValue);    newRight = operand.concat(this.rightValue);    break;
     }
     return new FacetedValue(this.view, newLeft, newRight);
 }
@@ -315,6 +410,7 @@ function biOpWithRightsidePrimitive(operation, operand){
         case '<<'         : newLeft = this.leftValue <<         operand; newRight = this.rightValue <<         operand; break;
         case 'in'         : newLeft = this.leftValue in         operand; newRight = this.rightValue in         operand; break;
         case 'instanceof' : newLeft = this.leftValue instanceof operand; newRight = this.rightValue instanceof operand; break;
+        case ':'          : newLeft = this.leftValue.concat(operand);    newRight = this.rightValue.concat(operand);    break;
     }
     return new FacetedValue(this.view, newLeft, newRight);
 }
