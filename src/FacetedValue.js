@@ -1,3 +1,6 @@
+exports.bin = FacetedValue;
+Symbol = Symbol || function noop(){};
+
 /**
  * A "faceted value" is an object which can contain an arbitrary number of facets. Each "facet" is a value corresponding
  * to a certain "view", and a view is a list of labels. If an "observer" (a computer program) reads the faceted value
@@ -19,14 +22,18 @@
  * var y = new Faceted(['B'], 3, 5); // <B ? 5 : 7>
  * x.binaryOps('*', y);              // <A ? <B ? 10 : 14> : <B ? 15 : 21>>
  *
- * @param {Array<String>} currentView -- A list of string labels by which the two facets will be differentiated
- * @param {*} leftValue -- This is the value that corresponds to all the labels in currentView being met; nominally, the "true" or "private" value.
- * @param {*} [rightValue] -- Optional. This is the value that corresponds to any of the labels in currentView not being met; nominally, the "false" or "public" value. If a rightValue is not provided, then one will be generated based on the typeof leftValue
- * @param {String} [additionalLabel] -- Optional. This is a convenience argument for adding one-off labels to the list of currentView.
+ * @param {String|Array<String>} currentView -- A list of string labels by which the two facets will be differentiated
+ * @param {*} leftValue -- This is the value that corresponds to all the labels in currentView being met; nominally, the
+ *          "true" or "private" value.
+ * @param {*} [rightValue] -- Optional. This is the value that corresponds to any of the labels in currentView not being
+ *          met; nominally, the "false" or "public" value. If a rightValue is not provided, then one will be generated
+ *          based on the typeof leftValue
+ * @param {String} [additionalLabel] -- Optional. This is a convenience argument for adding one-off labels to the list
+ *          of currentView.
  * @constructor
  */
 function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
-    this.view = currentView.slice();
+    this.view = (currentView.slice) ? currentView.slice(0) : currentView;
     this.leftValue = leftValue;
     this.rightValue = rightValue || produceGarbageSimilarTo(leftValue);
     if (typeof additionalLabel === 'string')
@@ -89,11 +96,10 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
             newLeft = this.binaryOps(operator, operand.leftValue, false);
             newRight = this.binaryOps(operator, operand.rightValue, false);
             return new FacetedValue(operand.view, newLeft, newRight);
-        } else {
-            newLeft = operand.binaryOps(operator, this.leftValue, true);
-            newRight = operand.binaryOps(operator, this.rightValue, true);
-            return new FacetedValue(this.view, newLeft, newRight);
         }
+        newLeft = operand.binaryOps(operator, this.leftValue, true);
+        newRight = operand.binaryOps(operator, this.rightValue, true);
+        return new FacetedValue(this.view, newLeft, newRight);
     }
 
     if (operandIsOnLeft)
@@ -114,9 +120,6 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
  * @example
  * // x--, decrementing all facets of x and returning a new FacetedValue with the original facets:
  * x.unaryOps('--');
- *
- * @example
- * var
  *
  * @param {string} operator
  * @param {boolean} [operatorIsOnLeft]
@@ -155,15 +158,16 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
 /**
  * TODO: Write description
  *
- * @param {Array<String>} facetList
+ * @param {Array<String>} view
  * @returns {*}
  */
-FacetedValue.prototype.getFacetVisibleVersus = function getFacetVisibleVersus(facetList){
+FacetedValue.prototype.getFacetVisibleVersus = function getFacetVisibleVersus(view){
     var v = this.rightValue;
-    if (leftSetContainsRightSet(facetList, this.view))
+    if (leftSetContainsRightSet(view, this.view))
         v = this.leftValue;
-    return (v instanceof FacetedValue) ? v.getFacetVisibleVersus(facetList) : v;
+    return (v instanceof FacetedValue) ? v.getFacetVisibleVersus(view) : v;
 };
+
 
 /**
  * Produces a human-readable representation of this FacetedValue.
@@ -195,7 +199,7 @@ FacetedValue.prototype.equals = function equals(value){
         return false;
     if (this.valuesAreThemselvesFaceted || equalsMethodsAreFoundIn(this.leftValue, this.rightValue))
         return this.leftValue.equals(value.leftValue) && this.rightValue.equals(value.rightValue);
-    return this.leftValue === this.rightValue;
+    return this.leftValue === value.leftValue && this.rightValue === value.rightValue;
 };
 
 /**
@@ -277,7 +281,7 @@ FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray)
     var leadingNonFacetedArgs = [];
     var haveNotYetEncounteredFacetedValue = true;
     var facetedArguments;
-    for (var i = 0; i < argArray.length(); i++){
+    for (var i = 0; i < argArray.length; i++){
         var currentArg = argArray[i];
         if (haveNotYetEncounteredFacetedValue){
             if (currentArg instanceof FacetedValue) {
@@ -288,6 +292,7 @@ FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray)
                 leadingNonFacetedArgs.push(currentArg);
         }
         else {
+            //noinspection JSUnusedAssignment
             facetedArguments = facetedArguments.binaryOps(':',
                 (currentArg instanceof FacetedValue) ? currentArg.toFacetedArray() : [currentArg]
             );
