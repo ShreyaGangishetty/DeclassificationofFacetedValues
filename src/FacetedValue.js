@@ -77,34 +77,31 @@ function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
  *
  * @param {string} operator -- One of the following operations to be performed with this FacetedValue as an operand:
  *       ['+','-','*','/','^','&','|','%','>','<','<=','>=','==','!=','&&','||','!==','===','>>','<<','in','instanceof',':']
- * @param {*} operand -- The other operand with which to perform the operation
+ * @param {*|FacetedValue} operand -- The other operand with which to perform the operation
  * @param {boolean} [operandIsOnLeft] -- True to execute the operation as `operand operator this`, falsey to execute
  *                                       as `this operator operand`. In some cases this makes a very large difference
  * @returns {FacetedValue} -- A new FacetedValue that is the product of the parameterized operation
  */
 FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operandIsOnLeft) {
-    var newLeft, newRight;
+    var that = this;
 
-    if (this.valuesAreThemselvesFaceted) {
-        newLeft = this.leftValue.binaryOps(operator, operand, operandIsOnLeft);
-        newRight = this.rightValue.binaryOps(operator, operand, operandIsOnLeft);
-        return new FacetedValue(this.view, newLeft, newRight);
-    }
-
-    if (operand instanceof FacetedValue) {
-        if (operandIsOnLeft) {
-            newLeft = this.binaryOps(operator, operand.leftValue, false);
-            newRight = this.binaryOps(operator, operand.rightValue, false);
-            return new FacetedValue(operand.view, newLeft, newRight);
+    function calculateBranch(lrValue, operandLrValue) {
+        if (lrValue instanceof FacetedValue) {
+            if (operand instanceof FacetedValue) {
+                if (setsAreTheSame(that.view, operand.view))
+                    return lrValue.binaryOps(operator, operandLrValue, operandIsOnLeft);
+                return lrValue.binaryOps(operator, operand, operandIsOnLeft);
+            }
+            return lrValue.binaryOps(operator, operand, operandIsOnLeft);
         }
-        newLeft = operand.binaryOps(operator, this.leftValue, true);
-        newRight = operand.binaryOps(operator, this.rightValue, true);
-        return new FacetedValue(this.view, newLeft, newRight);
+        if (operand instanceof FacetedValue)
+            return operand.binaryOps(operator, lrValue, !operandIsOnLeft); // note the careful inversion of operandIsOnLeft
+        return binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft);
     }
 
-    if (operandIsOnLeft)
-        return biOpWithLeftsidePrimitive(operator, operand);
-    return biOpWithRightsidePrimitive(operator, operand);
+    var newLeft = calculateBranch(this.leftValue, operand.leftValue);
+    var newRight = calculateBranch(this.rightValue, operand.rightValue);
+    return new FacetedValue(this.view, newLeft, newRight);
 };
 
 /**
@@ -147,8 +144,14 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
     }
     else {
         switch(operator){
-            case '++' : newLeft = this.leftValue++; newRight = this.rightValue++; break;
-            case '--' : newLeft = this.leftValue--; newRight = this.rightValue--; break;
+            case '++' : newLeft = this.leftValue++; newRight = this.rightValue++;               break;
+            case '--' : newLeft = this.leftValue--; newRight = this.rightValue--;               break;
+            case '+'      : newLeft = +this.leftValue;       newRight = +this.rightValue;       break;
+            case '-'      : newLeft = -this.leftValue;       newRight = -this.rightValue;       break;
+            case '!'      : newLeft = !this.leftValue;       newRight = !this.rightValue;       break;
+            case '~'      : newLeft = ~this.leftValue;       newRight = ~this.rightValue;       break;
+            case 'typeof' : newLeft = typeof this.leftValue; newRight = typeof this.rightValue; break;
+            case 'void'   : newLeft = void this.leftValue;   newRight = void this.rightValue;   break;
             default : throw new Error("Unrecognized binary right-side operator ``" + operator + "``.");
         }
     }
@@ -257,7 +260,7 @@ FacetedValue.prototype.apply = function apply(thisArg, argArray){
  * @returns {FacetedValue}
  */
 FacetedValue.prototype.apply_helper = function apply_helper(thisArg){
-    return this.apply(thisArg, arguments.slice(1));
+    return this.apply(thisArg, Array.prototype.slice.call(arguments, 1));
 };
 
 /**
@@ -349,75 +352,46 @@ function produceGarbageSimilarTo(value){
 /**
  * Helper function for binaryOps method; separates a massive switch statement for readability
  *
- * @param {string} operation
+ * @param {*} lrValue
+ * @param {string} operator
  * @param {*} operand
- * @returns {FacetedValue}
+ * @param {boolean} operandIsOnLeft
+ * @returns {*}
  */
-function biOpWithLeftsidePrimitive(operation, operand){
-    var newLeft, newRight;
-    switch(operation) {
-        case '+'          : newLeft = operand +          this.leftValue; newRight = operand +          this.rightValue; break;
-        case '-'          : newLeft = operand -          this.leftValue; newRight = operand -          this.rightValue; break;
-        case '*'          : newLeft = operand *          this.leftValue; newRight = operand *          this.rightValue; break;
-        case '/'          : newLeft = operand /          this.leftValue; newRight = operand /          this.rightValue; break;
-        case '^'          : newLeft = operand ^          this.leftValue; newRight = operand ^          this.rightValue; break;
-        case '&'          : newLeft = operand &          this.leftValue; newRight = operand &          this.rightValue; break;
-        case '|'          : newLeft = operand |          this.leftValue; newRight = operand |          this.rightValue; break;
-        case '%'          : newLeft = operand %          this.leftValue; newRight = operand %          this.rightValue; break;
-        case '>'          : newLeft = operand >          this.leftValue; newRight = operand >          this.rightValue; break;
-        case '<'          : newLeft = operand <          this.leftValue; newRight = operand <          this.rightValue; break;
-        case '<='         : newLeft = operand <=         this.leftValue; newRight = operand <=         this.rightValue; break;
-        case '>='         : newLeft = operand >=         this.leftValue; newRight = operand >=         this.rightValue; break;
-        case '=='         : newLeft = operand ==         this.leftValue; newRight = operand ==         this.rightValue; break;
-        case '!='         : newLeft = operand !=         this.leftValue; newRight = operand !=         this.rightValue; break;
-        case '&&'         : newLeft = operand &&         this.leftValue; newRight = operand &&         this.rightValue; break;
-        case '||'         : newLeft = operand ||         this.leftValue; newRight = operand ||         this.rightValue; break;
-        case '!=='        : newLeft = operand !==        this.leftValue; newRight = operand !==        this.rightValue; break;
-        case '==='        : newLeft = operand ===        this.leftValue; newRight = operand ===        this.rightValue; break;
-        case '>>'         : newLeft = operand >>         this.leftValue; newRight = operand >>         this.rightValue; break;
-        case '<<'         : newLeft = operand <<         this.leftValue; newRight = operand <<         this.rightValue; break;
-        case 'in'         : newLeft = operand in         this.leftValue; newRight = operand in         this.rightValue; break;
-        case 'instanceof' : newLeft = operand instanceof this.leftValue; newRight = operand instanceof this.rightValue; break;
-        case ':'          : newLeft = operand.concat(this.leftValue);    newRight = operand.concat(this.rightValue);    break;
-    }
-    return new FacetedValue(this.view, newLeft, newRight);
-}
+function binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft){
+    if (lrValue instanceof FacetedValue || operand instanceof FacetedValue)
+        throw new Error("FacetedValue not unpacking correctly");
 
-/**
- * Helper function for binaryOps method; separates a massive switch statement for readability
- *
- * @param {string} operation
- * @param {*} operand
- * @returns {FacetedValue}
- */
-function biOpWithRightsidePrimitive(operation, operand){
-    var newLeft, newRight;
-    switch(operation) {
-        case '+'          : newLeft = this.leftValue +          operand; newRight = this.rightValue +          operand; break;
-        case '-'          : newLeft = this.leftValue +          operand; newRight = this.rightValue +          operand; break;
-        case '*'          : newLeft = this.leftValue +          operand; newRight = this.rightValue +          operand; break;
-        case '/'          : newLeft = this.leftValue +          operand; newRight = this.rightValue +          operand; break;
-        case '^'          : newLeft = this.leftValue +          operand; newRight = this.rightValue +          operand; break;
-        case '&'          : newLeft = this.leftValue &          operand; newRight = this.rightValue &          operand; break;
-        case '|'          : newLeft = this.leftValue |          operand; newRight = this.rightValue |          operand; break;
-        case '%'          : newLeft = this.leftValue %          operand; newRight = this.rightValue %          operand; break;
-        case '>'          : newLeft = this.leftValue >          operand; newRight = this.rightValue >          operand; break;
-        case '<'          : newLeft = this.leftValue <          operand; newRight = this.rightValue <          operand; break;
-        case '<='         : newLeft = this.leftValue <=         operand; newRight = this.rightValue <=         operand; break;
-        case '>='         : newLeft = this.leftValue >=         operand; newRight = this.rightValue >=         operand; break;
-        case '=='         : newLeft = this.leftValue ==         operand; newRight = this.rightValue ==         operand; break;
-        case '!='         : newLeft = this.leftValue !=         operand; newRight = this.rightValue !=         operand; break;
-        case '&&'         : newLeft = this.leftValue &&         operand; newRight = this.rightValue &&         operand; break;
-        case '||'         : newLeft = this.leftValue ||         operand; newRight = this.rightValue ||         operand; break;
-        case '!=='        : newLeft = this.leftValue !==        operand; newRight = this.rightValue !==        operand; break;
-        case '==='        : newLeft = this.leftValue ===        operand; newRight = this.rightValue ===        operand; break;
-        case '>>'         : newLeft = this.leftValue >>         operand; newRight = this.rightValue >>         operand; break;
-        case '<<'         : newLeft = this.leftValue <<         operand; newRight = this.rightValue <<         operand; break;
-        case 'in'         : newLeft = this.leftValue in         operand; newRight = this.rightValue in         operand; break;
-        case 'instanceof' : newLeft = this.leftValue instanceof operand; newRight = this.rightValue instanceof operand; break;
-        case ':'          : newLeft = this.leftValue.concat(operand);    newRight = this.rightValue.concat(operand);    break;
+    switch(operator) {
+        case '+'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
+        case '-'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
+        case '*'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
+        case '/'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
+        case '^'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
+        case '&'          : return (operandIsOnLeft) ? operand &          lrValue : lrValue &          operand;
+        case '|'          : return (operandIsOnLeft) ? operand |          lrValue : lrValue |          operand;
+        case '%'          : return (operandIsOnLeft) ? operand %          lrValue : lrValue %          operand;
+        case '>'          : return (operandIsOnLeft) ? operand >          lrValue : lrValue >          operand;
+        case '<'          : return (operandIsOnLeft) ? operand <          lrValue : lrValue <          operand;
+        case '<='         : return (operandIsOnLeft) ? operand <=         lrValue : lrValue <=         operand;
+        case '>='         : return (operandIsOnLeft) ? operand >=         lrValue : lrValue >=         operand;
+        case '=='         : return (operandIsOnLeft) ? operand ==         lrValue : lrValue ==         operand;
+        case '!='         : return (operandIsOnLeft) ? operand !=         lrValue : lrValue !=         operand;
+        case '&&'         : return (operandIsOnLeft) ? operand &&         lrValue : lrValue &&         operand;
+        case '||'         : return (operandIsOnLeft) ? operand ||         lrValue : lrValue ||         operand;
+        case '!=='        : return (operandIsOnLeft) ? operand !==        lrValue : lrValue !==        operand;
+        case '==='        : return (operandIsOnLeft) ? operand ===        lrValue : lrValue ===        operand;
+        case '>>'         : return (operandIsOnLeft) ? operand >>         lrValue : lrValue >>         operand;
+        case '<<'         : return (operandIsOnLeft) ? operand <<         lrValue : lrValue <<         operand;
+        case 'in'         : return (operandIsOnLeft) ? operand in         lrValue : lrValue in         operand;
+        case 'instanceof' : return (operandIsOnLeft) ? operand instanceof lrValue : lrValue instanceof operand;
     }
-    return new FacetedValue(this.view, newLeft, newRight);
+    if (operator === ':'){
+        lrValue = (lrValue instanceof Array) ? lrValue : [lrValue];
+        operand = (operand instanceof Array) ? operand : [operand];
+        return (operandIsOnLeft) ? operand.concat(lrValue) : lrValue.concat(operand);
+    }
+    throw new Error("Unknown operator: ``" + operator + "``");
 }
 
 /**
@@ -429,6 +403,17 @@ function biOpWithRightsidePrimitive(operation, operand){
  */
 function leftSetContainsRightSet(leftSet, rightSet){
     return leftSet.filter(function(val) { return rightSet.indexOf(val) != -1;}).length === rightSet.length;
+}
+
+/**
+ * Determines if the two given sets contain the same elements
+ *
+ * @param {Array<*>} view
+ * @param {Array<*>} view2
+ * @returns {boolean}
+ */
+function setsAreTheSame(view, view2) {
+    return leftSetContainsRightSet(view, view2) && view.length == view2.length;
 }
 
 /**

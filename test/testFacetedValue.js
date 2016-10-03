@@ -222,7 +222,7 @@ exports.testFacetedValue = {
     }
 };
 
-function testBinaryOpsLeft(test){
+function testBinaryOpsRight(test){
     test.expect(23);
     var x = new FacetedValue("A", 2, 3);
     var y = 5;
@@ -257,8 +257,8 @@ function testBinaryOpsLeft(test){
     y = {blue: false};
     test.equal(x.binaryOps('in', y, false).toString(), '<A ? true : false>');
 
-    x = new FacetedValue('A', 'asd', 'fdeh');
-    y = 'string';
+    x = new FacetedValue('A', ['asas'], ['asd']);
+    y = Array;
     test.equal(x.binaryOps('instanceof', y, false).toString(), '<A ? true : true>');
 
     x = new FacetedValue('A', [1, 2], [3, 5]);
@@ -267,7 +267,7 @@ function testBinaryOpsLeft(test){
     test.done();
 }
 
-function testBinaryOpsRight(test){
+function testBinaryOpsLeft(test){
     test.expect(23);
     var y = 5;
     var x = new FacetedValue("A", 2, 3);
@@ -291,24 +291,24 @@ function testBinaryOpsRight(test){
 
     y = 0;
     x = new FacetedValue('A', true, false);
-    test.equal(x.binaryOps('==',  y, false).toString(), '<A ? false : true>');
-    test.equal(x.binaryOps('!=',  y, false).toString(), '<A ? true : false>');
-    test.equal(x.binaryOps('&&',  y, false).toString(), '<A ? false : false>');
-    test.equal(x.binaryOps('||',  y, false).toString(), '<A ? true : false>');
-    test.equal(x.binaryOps('!==', y, false).toString(), '<A ? true : true>');
-    test.equal(x.binaryOps('===', y, false).toString(), '<A ? false : false>');
+    test.equal(x.binaryOps('==',  y, true).toString(), '<A ? false : true>');
+    test.equal(x.binaryOps('!=',  y, true).toString(), '<A ? true : false>');
+    test.equal(x.binaryOps('&&',  y, true).toString(), '<A ? false : false>');
+    test.equal(x.binaryOps('||',  y, true).toString(), '<A ? true : false>');
+    test.equal(x.binaryOps('!==', y, true).toString(), '<A ? true : true>');
+    test.equal(x.binaryOps('===', y, true).toString(), '<A ? false : false>');
 
     y = "blue";
     x = new FacetedValue('A', {blue: false}, {red: true});
-    test.equal(x.binaryOps('in', y, false).toString(), '<A ? true : false>');
+    test.equal(x.binaryOps('in', y, true).toString(), '<A ? true : false>');
 
-    y = 'asdasdasd';
-    x = new FacetedValue('A', 'string', 'number');
-    test.equal(x.binaryOps('instanceof', y, false).toString(), '<A ? true : false>');
+    y = ['asdasdasd'];
+    x = new FacetedValue('A', Array, Array);
+    test.equal(x.binaryOps('instanceof', y, true).toString(), '<A ? true : false>');
 
-    y = 7;
-    x = new FacetedValue('A', [1, 2], [3, 5]);
-    test.equal(x.binaryOps(':', y, false).toString(), '<A ? 7,1,2, : 7,3,5>');
+    y = [7, 1];
+    x = new FacetedValue('A', 3, 5);
+    test.equal(x.binaryOps(':', y, true).toString(), '<A ? 7,1,2, : 7,3,5>');
     test.done();
 }
 
