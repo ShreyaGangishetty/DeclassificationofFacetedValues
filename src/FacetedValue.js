@@ -300,7 +300,7 @@ FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray)
         }
     }
     if (haveNotYetEncounteredFacetedValue)
-        lambda.apply(thisArg, argArray);
+        return lambda.apply(thisArg, argArray);
     else {
         return new FacetedValue(facetedArguments.view,
             invokeFunction(lambda, thisArg, facetedArguments.leftValue),
@@ -321,9 +321,9 @@ FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray)
  * @returns {FacetedValue}
  */
 FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
-    if (this.valuesAreThemselvesFaceted)
-        return new FacetedValue(this.view, this.leftValue.toFacetedArray(), this.rightValue.toFacetedArray());
-    return new FacetedValue(this.view, [this.leftValue], [this.rightValue]);
+    var newLeft = (this.leftValue instanceof FacetedValue) ? this.leftValue.toFacetedArray() : [this.leftValue];
+    var newRight = (this.rightValue instanceof FacetedValue) ? this.rightValue.toFacetedArray() : [this.rightValue];
+    return new FacetedValue(this.view, newLeft, newRight);
 };
 
 /* ************************** Helper functions ******************************************** */

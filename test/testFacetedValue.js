@@ -166,6 +166,11 @@ exports.testFacetedValue = {
         var d = function(x){ return x + "D"; };
         var x = new FacetedValue("X", new FacetedValue("Y", a, b), new FacetedValue("Y", c, d));
         test.equal(x.apply(this, ["4"]).toString(), '<X ? <Y ? 4A : 4B> : <Y ? 4C : 4D>>');
+
+        // TODO: faceted thisArg
+        // TODO: mix of faceted, nonfaceted arguments
+
+        test.done();
     },
 
     /**
@@ -191,6 +196,7 @@ exports.testFacetedValue = {
         var d = function(x){ return x + "D"; };
         var x = new FacetedValue("X", new FacetedValue("Y", a, b), new FacetedValue("Y", c, d));
         test.equal(x.apply_helper(this, "4").toString(), '<X ? <Y ? 4A : 4B> : <Y ? 4C : 4D>>');
+        test.done();
     },
 
     /**
@@ -207,7 +213,9 @@ exports.testFacetedValue = {
         var facetedSqrt = FacetedValue.invokeFunction(Math.sqrt, this, [facetedNumber]);
         test.equal(facetedSqrt.toString(), '<A ? 5 : 6>');
 
-        //TODO
+        // TODO: faceted thisArg
+        // TODO: mix of faceted, nonfaceted arguments
+        test.done();
     },
 
     /**
@@ -220,7 +228,13 @@ exports.testFacetedValue = {
      * @param {function} test.done
      */
     toFacetedArray : function testToFacetedArray(test){
-
+        var actual = new FacetedValue("A",
+            new FacetedValue("B", 1, 3),
+            new FacetedValue("C", 5, 7)
+        ).toFacetedArray().binaryOps('instanceof', Array).toString();
+        test.equal(actual, '<A ? <B ? true : true> : <C ? true : true>>');
+        // TODO all tests here and elsewhere should be able to handle differing data types among facets
+        test.done();
     }
 };
 
