@@ -94,8 +94,11 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
             }
             return lrValue.binaryOps(operator, operand, operandIsOnLeft);
         }
-        if (operand instanceof FacetedValue)
+        if (operand instanceof FacetedValue) {
+            if (setsAreTheSame(that.view, operand.view))
+                return binaryOpOfPrimitives(lrValue, operator, operandLrValue, operandIsOnLeft);
             return operand.binaryOps(operator, lrValue, !operandIsOnLeft); // note the careful inversion of operandIsOnLeft
+        }
         return binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft);
     }
 
@@ -103,6 +106,7 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
     var newRight = calculateBranch(this.rightValue, operand.rightValue);
     return new FacetedValue(this.view, newLeft, newRight);
 };
+
 
 /**
  * This function is used to perform basic operations of one operand, such as ++x, !x, and so on where x is a
@@ -146,13 +150,7 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
         switch(operator){
             case '++' : newLeft = this.leftValue++; newRight = this.rightValue++;               break;
             case '--' : newLeft = this.leftValue--; newRight = this.rightValue--;               break;
-            case '+'      : newLeft = +this.leftValue;       newRight = +this.rightValue;       break;
-            case '-'      : newLeft = -this.leftValue;       newRight = -this.rightValue;       break;
-            case '!'      : newLeft = !this.leftValue;       newRight = !this.rightValue;       break;
-            case '~'      : newLeft = ~this.leftValue;       newRight = ~this.rightValue;       break;
-            case 'typeof' : newLeft = typeof this.leftValue; newRight = typeof this.rightValue; break;
-            case 'void'   : newLeft = void this.leftValue;   newRight = void this.rightValue;   break;
-            default : throw new Error("Unrecognized binary right-side operator ``" + operator + "``.");
+            default : throw new Error("String ``" + operator + "`` is not recognized as a valid right-side operator. You may need to set operatorIsOnLeft to true.");
         }
     }
     return new FacetedValue(this.view, newLeft, newRight);
@@ -364,10 +362,10 @@ function binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft){
 
     switch(operator) {
         case '+'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
-        case '-'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
-        case '*'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
-        case '/'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
-        case '^'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
+        case '-'          : return (operandIsOnLeft) ? operand -          lrValue : lrValue -          operand;
+        case '*'          : return (operandIsOnLeft) ? operand *          lrValue : lrValue *          operand;
+        case '/'          : return (operandIsOnLeft) ? operand /          lrValue : lrValue /          operand;
+        case '^'          : return (operandIsOnLeft) ? operand ^          lrValue : lrValue ^          operand;
         case '&'          : return (operandIsOnLeft) ? operand &          lrValue : lrValue &          operand;
         case '|'          : return (operandIsOnLeft) ? operand |          lrValue : lrValue |          operand;
         case '%'          : return (operandIsOnLeft) ? operand %          lrValue : lrValue %          operand;
@@ -402,7 +400,9 @@ function binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft){
  * @returns {boolean}
  */
 function leftSetContainsRightSet(leftSet, rightSet){
-    return leftSet.filter(function(val) { return rightSet.indexOf(val) != -1;}).length === rightSet.length;
+    if (leftSet instanceof Array)
+        return leftSet.filter(function(val) { return rightSet.indexOf(val) != -1;}).length === rightSet.length;
+    return leftSet === rightSet;
 }
 
 /**

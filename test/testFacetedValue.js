@@ -39,7 +39,7 @@ exports.testFacetedValue = {
      * @param {function} test.done
      */
     toString: function testToString(test){
-        var expected = '<A ? <B ? 1 : 3> : <B ? 5 : 7>>'
+        var expected = '<A ? <B ? 1 : 3> : <B ? 5 : 7>>';
         var actual = new FacetedValue("A",
             new FacetedValue("B", 1, 3),
             new FacetedValue("B", 5, 7)
@@ -113,9 +113,11 @@ exports.testFacetedValue = {
      * @param {function} test.done
      */
     binaryOps : function testBinaryOps(test){
+        test.expect(51);
         testBinaryOpsLeft(test);
         testBinaryOpsRight(test);
         testBinaryOpsDoubleFaceted(test);
+        test.done();
     },
 
     /**
@@ -223,7 +225,6 @@ exports.testFacetedValue = {
 };
 
 function testBinaryOpsRight(test){
-    test.expect(23);
     var x = new FacetedValue("A", 2, 3);
     var y = 5;
     test.equal(x.binaryOps('+', y, false).toString(), '<A ? 7 : 8>');
@@ -248,7 +249,7 @@ function testBinaryOpsRight(test){
     y = 0;
     test.equal(x.binaryOps('==',  y, false).toString(), '<A ? false : true>');
     test.equal(x.binaryOps('!=',  y, false).toString(), '<A ? true : false>');
-    test.equal(x.binaryOps('&&',  y, false).toString(), '<A ? false : false>');
+    test.equal(x.binaryOps('&&',  y, false).toString(), '<A ? 0 : 0>');
     test.equal(x.binaryOps('||',  y, false).toString(), '<A ? true : false>');
     test.equal(x.binaryOps('!==', y, false).toString(), '<A ? true : true>');
     test.equal(x.binaryOps('===', y, false).toString(), '<A ? false : false>');
@@ -264,11 +265,9 @@ function testBinaryOpsRight(test){
     x = new FacetedValue('A', [1, 2], [3, 5]);
     y = 7;
     test.equal(x.binaryOps(':', y, false).toString(), '<A ? 1,2,7 : 3,5,7>');
-    test.done();
 }
 
 function testBinaryOpsLeft(test){
-    test.expect(23);
     var y = 5;
     var x = new FacetedValue("A", 2, 3);
     test.equal(x.binaryOps('+', y, true).toString(), '<A ? 7 : 8>');
@@ -293,7 +292,7 @@ function testBinaryOpsLeft(test){
     x = new FacetedValue('A', true, false);
     test.equal(x.binaryOps('==',  y, true).toString(), '<A ? false : true>');
     test.equal(x.binaryOps('!=',  y, true).toString(), '<A ? true : false>');
-    test.equal(x.binaryOps('&&',  y, true).toString(), '<A ? false : false>');
+    test.equal(x.binaryOps('&&',  y, true).toString(), '<A ? 0 : 0>');
     test.equal(x.binaryOps('||',  y, true).toString(), '<A ? true : false>');
     test.equal(x.binaryOps('!==', y, true).toString(), '<A ? true : true>');
     test.equal(x.binaryOps('===', y, true).toString(), '<A ? false : false>');
@@ -303,17 +302,15 @@ function testBinaryOpsLeft(test){
     test.equal(x.binaryOps('in', y, true).toString(), '<A ? true : false>');
 
     y = ['asdasdasd'];
-    x = new FacetedValue('A', Array, Array);
+    x = new FacetedValue('A', Array, FacetedValue);
     test.equal(x.binaryOps('instanceof', y, true).toString(), '<A ? true : false>');
 
     y = [7, 1];
     x = new FacetedValue('A', 3, 5);
-    test.equal(x.binaryOps(':', y, true).toString(), '<A ? 7,1,2, : 7,3,5>');
-    test.done();
+    test.equal(x.binaryOps(':', y, true).toString(), '<A ? 7,1,3 : 7,1,5>');
 }
 
 function testBinaryOpsDoubleFaceted(test){
-    test.expect();
     var x = new FacetedValue("A", 'a', 'b');
     var y = new FacetedValue('A', 5, 7);
     test.equal(x.binaryOps('+', y, false).toString(), '<A ? a5 : b7>');
@@ -326,6 +323,4 @@ function testBinaryOpsDoubleFaceted(test){
     x = new FacetedValue('A', new FacetedValue('B', 1, 3), new FacetedValue('C', 5, 7));
     y = new FacetedValue('A', new FacetedValue('B', 'a', 'b'), new FacetedValue('C', 'c', 'd'));
     test.equal(x.binaryOps('+', y).toString(), '<A ? <B ? 1a : 3b> : <C ? 5c : 7d>>');
-
-    test.done();
 }
