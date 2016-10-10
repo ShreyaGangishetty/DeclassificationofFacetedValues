@@ -1,4 +1,5 @@
 exports.bin = FacetedValue;
+//noinspection JSUnresolvedVariable,JSUnusedGlobalSymbols
 Symbol = Symbol || function noop(){};
 
 /**
@@ -38,9 +39,6 @@ function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
     this.rightValue = rightValue || produceGarbageSimilarTo(leftValue);
     if (typeof additionalLabel === 'string')
         this.view.push(additionalLabel);
-    this.valuesAreThemselvesFaceted = this.leftValue instanceof FacetedValue && this.rightValue instanceof FacetedValue;
-    if ((typeof this.leftValue !== typeof this.rightValue) || (this.leftValue instanceof FacetedValue ^ this.rightValue instanceof FacetedValue))
-        throw new Error("Left and right values must be of the same type.");
 }
 
 /**
@@ -129,29 +127,46 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
 FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) {
     var newLeft, newRight;
 
-    if (this.valuesAreThemselvesFaceted) {
-        newLeft = this.leftValue.unaryOps(operator, operatorIsOnLeft);
-        newRight = this.rightValue.unaryOps(operator, operatorIsOnLeft);
-    }
-    else if (operatorIsOnLeft){
+    function calculateLRBranch(lrValue){
+        if (lrValue instanceof FacetedValue)
+            return lrValue.unaryOps(operator, operatorIsOnLeft);
+        if (!operatorIsOnLeft)
+            throw new Error("Unrecognized right-side unary operator ``" + operator +
+                "``. You may need to set operatorIsOnLeft to true in the arguments.");
         switch(operator){
-            case '++' : ++this.leftValue; ++this.rightValue; return this;
-            case '--' : --this.leftValue; --this.rightValue; return this;
-            case '+'      : newLeft = +this.leftValue;       newRight =       +this.rightValue; break;
-            case '-'      : newLeft = -this.leftValue;       newRight =       -this.rightValue; break;
-            case '!'      : newLeft = !this.leftValue;       newRight =       !this.rightValue; break;
-            case '~'      : newLeft = ~this.leftValue;       newRight =       ~this.rightValue; break;
-            case 'typeof' : newLeft = typeof this.leftValue; newRight = typeof this.rightValue; break;
-            case 'void'   : newLeft = void this.leftValue;   newRight =   void this.rightValue; break;
-            default : throw new Error("Unrecognized binary left-side operator ``" + operator + "``.");
+            case '+'      : return +lrValue;
+            case '-'      : return -lrValue;
+            case '!'      : return !lrValue;
+            case '~'      : return ~lrValue;
+            case 'typeof' : return typeof lrValue;
+            case 'void'   : return void   lrValue;
+            default : throw new Error("Unrecognized left-side unary operator ``" + operator + "``.");
         }
     }
-    else {
-        switch(operator){
-            case '++' : newLeft = this.leftValue++; newRight = this.rightValue++;               break;
-            case '--' : newLeft = this.leftValue--; newRight = this.rightValue--;               break;
-            default : throw new Error("String ``" + operator + "`` is not recognized as a valid right-side operator. You may need to set operatorIsOnLeft to true.");
-        }
+
+    // I apologize, dear reader, for the following snagglefest. It is necessary for the increments and
+    // decrements to have the expected ordering of changing-and-returning, returning-and-changing behaviors.
+    if (operator == '++'){
+        if (this.leftValue instanceof FacetedValue)
+            newLeft = this.leftValue.unaryOps(operator, operatorIsOnLeft);
+        else
+            newLeft = (operatorIsOnLeft) ? ++this.leftValue : this.leftValue++;
+        if (this.rightValue instanceof FacetedValue)
+            newRight = this.rightValue.unaryOps(operator, operatorIsOnLeft);
+        else
+            newRight = (operatorIsOnLeft) ? ++this.rightValue : this.rightValue++;
+    } else if (operator == '--'){
+        if (this.leftValue instanceof FacetedValue)
+            newLeft = this.leftValue.unaryOps(operator, operatorIsOnLeft);
+        else
+            newLeft = (operatorIsOnLeft) ? --this.leftValue : this.leftValue--;
+        if (this.rightValue instanceof FacetedValue)
+            newRight = this.rightValue.unaryOps(operator, operatorIsOnLeft);
+        else
+            newRight = (operatorIsOnLeft) ? --this.rightValue : this.rightValue--;
+    } else {
+        newLeft  = calculateLRBranch(this.leftValue);
+        newRight = calculateLRBranch(this.rightValue);
     }
     return new FacetedValue(this.view, newLeft, newRight);
 };
@@ -196,10 +211,10 @@ FacetedValue.prototype.equals = function equals(value){
         return false;
     if (this.view.toString() !== value.view.toString())
         return false;
-    if (this.valuesAreThemselvesFaceted !== value.valuesAreThemselvesFaceted)
+    if (this.leftValue.equals && typeof this.leftValue.equals == 'function' && !this.leftValue.equals(value))
         return false;
-    if (this.valuesAreThemselvesFaceted || equalsMethodsAreFoundIn(this.leftValue, this.rightValue))
-        return this.leftValue.equals(value.leftValue) && this.rightValue.equals(value.rightValue);
+    if (this.rightValue.equals && typeof this.rightValue.equals == 'function' && !this.rightValue.equals(value))
+        return false;
     return this.leftValue === value.leftValue && this.rightValue === value.rightValue;
 };
 
@@ -231,7 +246,9 @@ FacetedValue.prototype.apply = function apply(thisArg, argArray){
             this.apply(this.rightValue, argArray)
         );
     }
-    if (this.valuesAreThemselvesFaceted || typeof this.leftValue === "function") {
+
+    if ((typeof this.leftValue === "function" && typeof this.rightValue === 'function')
+        || (this.leftValue instanceof FacetedValue && this.rightValue instanceof FacetedValue)) {
         return new FacetedValue(this.view,
             FacetedValue.invokeFunction(this.leftValue, thisArg, argArray),
             FacetedValue.invokeFunction(this.rightValue, thisArg, argArray)
@@ -442,16 +459,4 @@ function simplify(facetedValue){
         }
     }
     return facetedValue;
-}
-
-/**
- * Checks to see if the two values are both objects that have an equals method
- *
- * @param {*} val1
- * @param {*} val2
- * @returns {boolean}
- */
-function equalsMethodsAreFoundIn(val1, val2){
-    return val1.equals && typeof val1.equals == 'function'
-        && val2.equals && typeof val2.equals == 'function';
 }

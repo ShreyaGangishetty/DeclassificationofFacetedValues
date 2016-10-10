@@ -69,11 +69,11 @@ exports.testFacetedValue = {
         test.equal(x.toString(), '<A ? 2 : 3>');
 
         // These operations should mutate the FacetedValue
-        x = new FacetedValue('A', 2, 3);
-        test.equal(x.toString(), '<A ? 2 : 3>');
-        test.equal(x.unaryOps('++', false).toString(), '<A ? 2 : 3>');
-        test.equal(x.unaryOps('--', false).toString(), '<A ? 3 : 4>');
-        test.equal(x.toString(), '<A ? 2 : 3>');
+        x = new FacetedValue('A', 5, 6);
+        test.equal(x.toString(), '<A ? 5 : 6>');
+        test.equal(x.unaryOps('++', false).toString(), '<A ? 5 : 6>');
+        test.equal(x.unaryOps('--', false).toString(), '<A ? 6 : 7>');
+        test.equal(x.toString(), '<A ? 5 : 6>');
 
         // Remaining operations should never mutate the FacetedValue
         x = new FacetedValue('A', 5, -7);
@@ -98,7 +98,7 @@ exports.testFacetedValue = {
         var y = new FacetedValue('B', 5, 7);
         var z = new FacetedValue('C', x, y);
         test.equal(z.toString(), '<C ? <A ? 2 : 3> : <B ? 5 : 7>>');
-        test.equal(z.unaryOps('++', true), '<C ? <A ? 3 : 4> : <B ? 6 : 8>>');
+        test.equal(z.unaryOps('++', true).toString(), '<C ? <A ? 3 : 4> : <B ? 6 : 8>>');
 
         test.done();
     },
