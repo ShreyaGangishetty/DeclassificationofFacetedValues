@@ -299,6 +299,9 @@ FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray)
     var leadingNonFacetedArgs = [];
     var haveNotYetEncounteredFacetedValue = true;
     var facetedArguments;
+    // TODO thisArg can be faceted. Handling it here, it would not be necessary to handle in .apply()
+    // TODO Should also unpack facets here instead of apply.
+    // TODO I'm not convinced this is handling a mix of faceted and non-faceted args correctly
     for (var i = 0; i < argArray.length; i++){
         var currentArg = argArray[i];
         if (haveNotYetEncounteredFacetedValue){
@@ -341,6 +344,16 @@ FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
     var newLeft = (this.leftValue instanceof FacetedValue) ? this.leftValue.toFacetedArray() : [this.leftValue];
     var newRight = (this.rightValue instanceof FacetedValue) ? this.rightValue.toFacetedArray() : [this.rightValue];
     return new FacetedValue(this.view, newLeft, newRight);
+};
+
+/**
+ *
+ * @param {FacetedValue<Boolean>} facetedBoolean
+ * @param {Function} e_true
+ * @param {Function} e_fals
+ */
+FacetedValue.evaluateConditional = function evaluateConditional(facetedBoolean, e_true, e_fals){
+    // TODO
 };
 
 /* ************************** Helper functions ******************************************** */
