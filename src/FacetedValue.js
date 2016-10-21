@@ -34,12 +34,16 @@ Symbol = Symbol || function noop(){};
  * @constructor
  */
 function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
+    if (currentView === undefined || currentView === null)
+        throw new Error("FacetedValue constructor requires the `view` parameter to be a String or Array of Strings");
     this.view = (currentView.slice) ? currentView.slice(0) : currentView;
     this.leftValue = leftValue;
     this.rightValue = rightValue || produceGarbageSimilarTo(leftValue);
     if (typeof additionalLabel === 'string')
         this.view.push(additionalLabel);
 }
+
+/* ********************************* Member functions ***************************************************/
 
 /**
  * This function is used to perform basic operations of two operands, in the line of x+2, or x+y, where x and/or y
@@ -48,6 +52,8 @@ function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
  *
  * For convenience there is also a ':' operator not found by default in Javascript, which concatenates two
  * faceted arrays. There is an example below.
+ *
+ * An alternative way of formulating these can be found in{@link FacetedValue.binaryOperation}
  *
  * @example
  * var x = new FacetedValue('A', 1, 2);
@@ -81,28 +87,7 @@ function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
  * @returns {FacetedValue} -- A new FacetedValue that is the product of the parameterized operation
  */
 FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operandIsOnLeft) {
-    var that = this;
-
-    function calculateBranch(lrValue, operandLrValue) {
-        if (lrValue instanceof FacetedValue) {
-            if (operand instanceof FacetedValue) {
-                if (setsAreTheSame(that.view, operand.view))
-                    return lrValue.binaryOps(operator, operandLrValue, operandIsOnLeft);
-                return lrValue.binaryOps(operator, operand, operandIsOnLeft);
-            }
-            return lrValue.binaryOps(operator, operand, operandIsOnLeft);
-        }
-        if (operand instanceof FacetedValue) {
-            if (setsAreTheSame(that.view, operand.view))
-                return binaryOpOfPrimitives(lrValue, operator, operandLrValue, operandIsOnLeft);
-            return operand.binaryOps(operator, lrValue, !operandIsOnLeft); // note the careful inversion of operandIsOnLeft
-        }
-        return binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft);
-    }
-
-    var newLeft = calculateBranch(this.leftValue, operand.leftValue);
-    var newRight = calculateBranch(this.rightValue, operand.rightValue);
-    return new FacetedValue(this.view, newLeft, newRight);
+    return FacetedValue.binaryOperation(this, operator, operand, operandIsOnLeft);
 };
 
 
@@ -130,9 +115,6 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
     function calculateLRBranch(lrValue){
         if (lrValue instanceof FacetedValue)
             return lrValue.unaryOps(operator, operatorIsOnLeft);
-        if (!operatorIsOnLeft)
-            throw new Error("Unrecognized right-side unary operator ``" + operator +
-                "``. You may need to set operatorIsOnLeft to true in the arguments.");
         switch(operator){
             case '+'      : return +lrValue;
             case '-'      : return -lrValue;
@@ -165,6 +147,9 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
         else
             newRight = (operatorIsOnLeft) ? --this.rightValue : this.rightValue--;
     } else {
+        if (!operatorIsOnLeft)
+            throw new Error("Unrecognized right-side unary operator ``" + operator +
+                "``. You may need to set operatorIsOnLeft to true in the arguments.");
         newLeft  = calculateLRBranch(this.leftValue);
         newRight = calculateLRBranch(this.rightValue);
     }
@@ -211,11 +196,20 @@ FacetedValue.prototype.equals = function equals(value){
         return false;
     if (this.view.toString() !== value.view.toString())
         return false;
-    if (this.leftValue.equals && typeof this.leftValue.equals == 'function' && !this.leftValue.equals(value))
-        return false;
-    if (this.rightValue.equals && typeof this.rightValue.equals == 'function' && !this.rightValue.equals(value))
-        return false;
-    return this.leftValue === value.leftValue && this.rightValue === value.rightValue;
+
+    var leftEquals;
+    if (this.leftValue && this.leftValue.equals && typeof this.leftValue.equals == 'function')
+        leftEquals = this.leftValue.equals(value.leftValue);
+    else
+        leftEquals = this.leftValue === value.leftValue;
+
+    var rightEquals;
+    if (this.rightValue && this.rightValue.equals && typeof this.rightValue.equals == 'function')
+        rightEquals = this.rightValue.equals(value.rightValue);
+    else
+        rightEquals = this.rightValue === value.rightValue;
+
+    return leftEquals && rightEquals;
 };
 
 /**
@@ -234,27 +228,28 @@ FacetedValue.prototype.equals = function equals(value){
  * var facetedResult = facetedFunction.apply(this, [3, 5]);
  * console.log('result: ' + facetedResult.toString());  // result: <bleagh ? 8 : 15>
  *
- * @param {object|FacetedValue} [thisArg] -- an object that will be reference by the `this` keyword
- * @param {Array<*>} [argArray] -- a list of arguments that will be passed to the functions
+ * @param {Object|FacetedValue<Object>} [thisArg] -- an object that will be reference by the `this` keyword
+ * @param {Array|FacetedValue<Array>} [argArray] -- a list of arguments that will be passed to the functions
  * @returns {FacetedValue}
- * @throws {Error} -- If the FacetedValue does not contain functions
  */
 FacetedValue.prototype.apply = function apply(thisArg, argArray){
-    if (thisArg instanceof FacetedValue) {
-        return new FacetedValue(thisArg.view,
-            this.apply(this.leftValue, argArray),
-            this.apply(this.rightValue, argArray)
-        );
-    }
+    var newLeft, newRight;
 
-    if ((typeof this.leftValue === "function" && typeof this.rightValue === 'function')
-        || (this.leftValue instanceof FacetedValue && this.rightValue instanceof FacetedValue)) {
-        return new FacetedValue(this.view,
-            FacetedValue.invokeFunction(this.leftValue, thisArg, argArray),
-            FacetedValue.invokeFunction(this.rightValue, thisArg, argArray)
-        );
-    }
-    throw new Error("This FacetedValue is not one of functions.");
+    if (this.leftValue instanceof FacetedValue)
+        newLeft = this.leftValue.apply(thisArg, argArray);
+    else if (typeof this.leftValue === 'function')
+        newLeft = FacetedValue.invokeFunction(this.leftValue, thisArg, argArray);
+    else
+        throw new Error("This FacetedValue is not one of functions.");
+
+    if (this.rightValue instanceof FacetedValue)
+        newRight = this.rightValue.apply(thisArg, argArray);
+    else if (typeof this.rightValue === 'function')
+        newRight = FacetedValue.invokeFunction(this.rightValue, thisArg, argArray);
+    else
+        throw new Error("This FacetedValue is not one of functions.");
+
+    return new FacetedValue(this.view, newLeft, newRight);
 };
 
 /**
@@ -271,12 +266,32 @@ FacetedValue.prototype.apply = function apply(thisArg, argArray){
  * var facetedResult = facetedFunction.apply_helper(this, 3, 5);
  * console.log('result: ' + facetedResult.toString());  // result: <bleagh ? 8 : 15>
  *
- * @param {Object|FacetedValue} thisArg
+ * @param {Object|FacetedValue<Object>} thisArg
  * @returns {FacetedValue}
  */
 FacetedValue.prototype.apply_helper = function apply_helper(thisArg){
     return this.apply(thisArg, Array.prototype.slice.call(arguments, 1));
 };
+
+/**
+ * Returns a new FacetedValue which contain the same facets and the same values, however, each of those values are
+ * contained inside an array.
+ *
+ * @example
+ * var x = new FacetedValue('A', 3, 5);
+ * var y = x.toFacetedArray();
+ * console.log(x); // <A ? 3 : 5>
+ * console.log(y); // <A > [3] : [5]>
+ *
+ * @returns {FacetedValue<Array>}
+ */
+FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
+    var newLeft = (this.leftValue instanceof FacetedValue) ? this.leftValue.toFacetedArray() : [this.leftValue];
+    var newRight = (this.rightValue instanceof FacetedValue) ? this.rightValue.toFacetedArray() : [this.rightValue];
+    return new FacetedValue(this.view, newLeft, newRight);
+};
+
+/* ******************************* "Static" functions ***************************************************/
 
 /**
  * When one or more FacetedValues are to be given as arguments to a function that is not itself FacetedValues-aware,
@@ -290,60 +305,64 @@ FacetedValue.prototype.apply_helper = function apply_helper(thisArg){
  * var facetedSqrt = FacetedValue.invokeFunction(Math.sqrt, this, [facetedNumber]);
  * console.log(facetedSqrt); // output: <A ? 5 : 6>
  *
- * @param {function} lambda
- * @param {object|FacetedValue} thisArg
- * @param {Array<*>} argArray
+ * @param {Function|FacetedValue<Function>} lambda
+ * @param {Object|FacetedValue<Object>} thisArg
+ * @param {Array|FacetedValue<Array>} argArray
  * @returns {FacetedValue}
  */
 FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray){
-    var leadingNonFacetedArgs = [];
-    var haveNotYetEncounteredFacetedValue = true;
-    var facetedArguments;
-    // TODO thisArg can be faceted. Handling it here, it would not be necessary to handle in .apply()
-    // TODO Should also unpack facets here instead of apply.
-    // TODO I'm not convinced this is handling a mix of faceted and non-faceted args correctly
-    for (var i = 0; i < argArray.length; i++){
-        var currentArg = argArray[i];
-        if (haveNotYetEncounteredFacetedValue){
-            if (currentArg instanceof FacetedValue) {
-                haveNotYetEncounteredFacetedValue = false;
-                facetedArguments = currentArg.toFacetedArray().binaryOps(':', leadingNonFacetedArgs, true);
-            }
-            else
-                leadingNonFacetedArgs.push(currentArg);
-        }
-        else {
-            //noinspection JSUnusedAssignment
-            facetedArguments = facetedArguments.binaryOps(':',
-                (currentArg instanceof FacetedValue) ? currentArg.toFacetedArray() : [currentArg]
-            );
-        }
+    if (lambda instanceof FacetedValue){
+        return new FacetedValue(lambda.view,
+            invokeFunction(lambda.leftValue, thisArg, argArray),
+            invokeFunction(lambda.rightValue, thisArg, argArray)
+        );
     }
-    if (haveNotYetEncounteredFacetedValue)
-        return lambda.apply(thisArg, argArray);
-    else {
-        return new FacetedValue(facetedArguments.view,
-            invokeFunction(lambda, thisArg, facetedArguments.leftValue),
-            invokeFunction(lambda, thisArg, facetedArguments.rightValue));
+    if (thisArg instanceof FacetedValue){
+        return new FacetedValue(thisArg.view,
+            invokeFunction(lambda, thisArg.leftValue, argArray),
+            invokeFunction(lambda, thisArg.rightValue, argArray)
+        );
     }
+    if (argArray instanceof FacetedValue){
+        return new FacetedValue(argArray.view,
+            invokeFunction(lambda, thisArg, argArray.leftValue),
+            invokeFunction(lambda, thisArg, argArray.rightValue)
+        );
+    }
+    if (facetedValueIsFoundIn(argArray)){
+        var facetedArgArray = FacetedValue.getFacetedListOfValuesFrom(argArray);
+        return new FacetedValue(facetedArgArray.view,
+            invokeFunction(lambda, thisArg, facetedArgArray.leftValue),
+            invokeFunction(lambda, thisArg, facetedArgArray.rightValue)
+        );
+    }
+    return lambda.apply(thisArg, argArray);
 };
 
 /**
- * Returns a new FacetedValue which contain the same facets and the same values, however, each of those values are
- * contained inside an array.
+ * We have a list of arguments, some of which may be FacetedValues. We want to extract these facets so that for each
+ * possible combination of views we have a list of non-faceted arguments. For example:
  *
- * @example
- * var x = new FacetedValue('A', 3, 5);
- * var y = x.toFacetedArray();
- * console.log(x); // <A ? 3 : 5>
- * console.log(y); // <A > [3] : [5]>
+ * [1, 2, 3, <A ? 4 : 5>, <B ? 6 : 7> 8]
  *
- * @returns {FacetedValue}
+ * becomes
+ *
+ * <A ? <B ? [1, 2, 3, 4, 6, 8]
+ *         : [1, 2, 3, 4, 7, 8]>
+ *    : <B ? [1, 2, 3, 5, 6, 8]
+ *         : [1, 2, 3, 5, 7, 8]>>
+ *
+ * @param {Array} listOfFacetedValues
+ * @return {FacetedValue<Array>}
  */
-FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
-    var newLeft = (this.leftValue instanceof FacetedValue) ? this.leftValue.toFacetedArray() : [this.leftValue];
-    var newRight = (this.rightValue instanceof FacetedValue) ? this.rightValue.toFacetedArray() : [this.rightValue];
-    return new FacetedValue(this.view, newLeft, newRight);
+FacetedValue.getFacetedListOfValuesFrom = function getFacetedListOfValuesFrom(listOfFacetedValues){
+    var indexOfFirstFacVal = findFirstFacetedValueIn(listOfFacetedValues);
+    var leadingNonFacetedValues = listOfFacetedValues.slice(0, indexOfFirstFacVal); // TODO end excluded?
+    var facetedList = listOfFacetedValues[indexOfFirstFacVal].toFacetedArray();
+    var followingArgs = listOfFacetedValues.slice(indexOfFirstFacVal + 1);
+    facetedList.binaryOps(':', leadingNonFacetedValues, true);
+    followingArgs.forEach(function(arg){ facetedList.binaryOps(":", arg); });
+    return facetedList;
 };
 
 /**
@@ -354,6 +373,45 @@ FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
  */
 FacetedValue.evaluateConditional = function evaluateConditional(facetedBoolean, e_true, e_fals){
     // TODO
+};
+
+/**
+ * Alternative formulation for {@link FacetedValue#binaryOps} (which simply translates into this function anyway).
+ *
+ * @example
+ * var x = new FacetedValue('A", 1, 2);
+ * var y = 'b';
+ * output = FacetedValue.binaryOperation(x, '+', y);
+ * console.log(output); // <A ? 1b : 2b>
+ *
+ * @param {FacetedValue|*} operand1
+ * @param {string} operator -- One of the following operations to be performed with this FacetedValue as an operand:
+ *       ['+','-','*','/','^','&','|','%','>','<','<=','>=','==','!=','&&','||','!==','===','>>','<<','in','instanceof',':']
+ * @param {FacetedValue|*} operand2
+ * @param {boolean} [operand2isOnLeft] -- defaults to false
+ * @returns {FacetedValue}
+ */
+FacetedValue.binaryOperation = function binaryOperation(operand1, operator, operand2, operand2isOnLeft) {
+    if (operand1 instanceof FacetedValue && operand2 instanceof FacetedValue
+        && (setsAreTheSame(operand1.view, operand2.view))){
+        return new FacetedValue(operand1.view,
+            binaryOperation(operand1.leftValue, operator, operand2.leftValue, operand2isOnLeft),
+            binaryOperation(operand1.rightValue, operator, operand2.rightValue, operand2isOnLeft)
+        );
+    }
+    if (operand1 instanceof FacetedValue){
+        return new FacetedValue(operand1.view,
+            binaryOperation(operand1.leftValue, operator, operand2, operand2isOnLeft),
+            binaryOperation(operand1.rightValue, operator, operand2, operand2isOnLeft)
+        );
+    }
+    if (operand2 instanceof FacetedValue){
+        return new FacetedValue(operand2.view,
+            binaryOperation(operand1, operator, operand2.leftValue, operand2isOnLeft),
+            binaryOperation(operand1, operator, operand2.rightValue, operand2isOnLeft)
+        );
+    }
+    return binaryOperationOfPrimitives(operand1, operator, operand2, operand2isOnLeft);
 };
 
 /* ************************** Helper functions ******************************************** */
@@ -378,46 +436,51 @@ function produceGarbageSimilarTo(value){
 }
 
 /**
- * Helper function for binaryOps method; separates a massive switch statement for readability
+ * This function simply sections off a chunk of code from {@link FacetedValue.binaryOperation} for readability.
+ * It's the part where the FacetedValue has been descended through to a non-faceted value on which we can perform a
+ * standard Javascript operation.
  *
- * @param {*} lrValue
- * @param {string} operator
- * @param {*} operand
- * @param {boolean} operandIsOnLeft
+ * @param {*} operand1
+ * @param {string} operator -- One of the following operations to be performed with this FacetedValue as an operand:
+ *       ['+','-','*','/','^','&','|','%','>','<','<=','>=','==','!=','&&','||','!==','===','>>','<<','in','instanceof',':']
+ * @param {*} operand2
+ * @param {boolean} [operand2isOnLeft] -- defaults to false
  * @returns {*}
  */
-function binaryOpOfPrimitives(lrValue, operator, operand, operandIsOnLeft){
-    if (lrValue instanceof FacetedValue || operand instanceof FacetedValue)
+function binaryOperationOfPrimitives(operand1, operator, operand2, operand2isOnLeft){
+    operand2isOnLeft = operand2isOnLeft || false;
+    if (operand1 instanceof FacetedValue || operand2 instanceof FacetedValue)
         throw new Error("FacetedValue not unpacking correctly");
-
     switch(operator) {
-        case '+'          : return (operandIsOnLeft) ? operand +          lrValue : lrValue +          operand;
-        case '-'          : return (operandIsOnLeft) ? operand -          lrValue : lrValue -          operand;
-        case '*'          : return (operandIsOnLeft) ? operand *          lrValue : lrValue *          operand;
-        case '/'          : return (operandIsOnLeft) ? operand /          lrValue : lrValue /          operand;
-        case '^'          : return (operandIsOnLeft) ? operand ^          lrValue : lrValue ^          operand;
-        case '&'          : return (operandIsOnLeft) ? operand &          lrValue : lrValue &          operand;
-        case '|'          : return (operandIsOnLeft) ? operand |          lrValue : lrValue |          operand;
-        case '%'          : return (operandIsOnLeft) ? operand %          lrValue : lrValue %          operand;
-        case '>'          : return (operandIsOnLeft) ? operand >          lrValue : lrValue >          operand;
-        case '<'          : return (operandIsOnLeft) ? operand <          lrValue : lrValue <          operand;
-        case '<='         : return (operandIsOnLeft) ? operand <=         lrValue : lrValue <=         operand;
-        case '>='         : return (operandIsOnLeft) ? operand >=         lrValue : lrValue >=         operand;
-        case '=='         : return (operandIsOnLeft) ? operand ==         lrValue : lrValue ==         operand;
-        case '!='         : return (operandIsOnLeft) ? operand !=         lrValue : lrValue !=         operand;
-        case '&&'         : return (operandIsOnLeft) ? operand &&         lrValue : lrValue &&         operand;
-        case '||'         : return (operandIsOnLeft) ? operand ||         lrValue : lrValue ||         operand;
-        case '!=='        : return (operandIsOnLeft) ? operand !==        lrValue : lrValue !==        operand;
-        case '==='        : return (operandIsOnLeft) ? operand ===        lrValue : lrValue ===        operand;
-        case '>>'         : return (operandIsOnLeft) ? operand >>         lrValue : lrValue >>         operand;
-        case '<<'         : return (operandIsOnLeft) ? operand <<         lrValue : lrValue <<         operand;
-        case 'in'         : return (operandIsOnLeft) ? operand in         lrValue : lrValue in         operand;
-        case 'instanceof' : return (operandIsOnLeft) ? operand instanceof lrValue : lrValue instanceof operand;
+        case '+'          : return (operand2isOnLeft) ?  operand2 +          operand1 : operand1 +          operand2;
+        case '-'          : return (operand2isOnLeft) ?  operand2 -          operand1 : operand1 -          operand2;
+        case '*'          : return (operand2isOnLeft) ?  operand2 *          operand1 : operand1 *          operand2;
+        case '/'          : return (operand2isOnLeft) ?  operand2 /          operand1 : operand1 /          operand2;
+        case '^'          : return (operand2isOnLeft) ?  operand2 ^          operand1 : operand1 ^          operand2;
+        case '&'          : return (operand2isOnLeft) ?  operand2 &          operand1 : operand1 &          operand2;
+        case '|'          : return (operand2isOnLeft) ?  operand2 |          operand1 : operand1 |          operand2;
+        case '%'          : return (operand2isOnLeft) ?  operand2 %          operand1 : operand1 %          operand2;
+        case '>'          : return (operand2isOnLeft) ?  operand2 >          operand1 : operand1 >          operand2;
+        case '<'          : return (operand2isOnLeft) ?  operand2 <          operand1 : operand1 <          operand2;
+        case '<='         : return (operand2isOnLeft) ?  operand2 <=         operand1 : operand1 <=         operand2;
+        case '>='         : return (operand2isOnLeft) ?  operand2 >=         operand1 : operand1 >=         operand2;
+        case '=='         : return (operand2isOnLeft) ?  operand2 ==         operand1 : operand1 ==         operand2;
+        case '!='         : return (operand2isOnLeft) ?  operand2 !=         operand1 : operand1 !=         operand2;
+        case '&&'         : return (operand2isOnLeft) ?  operand2 &&         operand1 : operand1 &&         operand2;
+        case '||'         : return (operand2isOnLeft) ?  operand2 ||         operand1 : operand1 ||         operand2;
+        case '!=='        : return (operand2isOnLeft) ?  operand2 !==        operand1 : operand1 !==        operand2;
+        case '==='        : return (operand2isOnLeft) ?  operand2 ===        operand1 : operand1 ===        operand2;
+        case '>>'         : return (operand2isOnLeft) ?  operand2 >>         operand1 : operand1 >>         operand2;
+        case '<<'         : return (operand2isOnLeft) ?  operand2 <<         operand1 : operand1 <<         operand2;
+        case 'in'         : return (operand2isOnLeft) ?  operand2 in         operand1 : operand1 in         operand2;
+        case 'instanceof' : return (operand2isOnLeft) ?  operand2 instanceof operand1 : operand1 instanceof operand2;
     }
     if (operator === ':'){
-        lrValue = (lrValue instanceof Array) ? lrValue : [lrValue];
-        operand = (operand instanceof Array) ? operand : [operand];
-        return (operandIsOnLeft) ? operand.concat(lrValue) : lrValue.concat(operand);
+        operand1 = (operand1 instanceof Array) ? operand1 : [operand1];
+        operand2 = (operand2 instanceof Array) ? operand2 : [operand2];
+        if (operand2isOnLeft)
+            return operand2.concat(operand1);
+        return operand1.concat(operand2);
     }
     throw new Error("Unknown operator: ``" + operator + "``");
 }
@@ -472,4 +535,28 @@ function simplify(facetedValue){
         }
     }
     return facetedValue;
+}
+
+/**
+ * Checks to see if there are one or more FacetedValues in the given array
+ *
+ * @param {Array} list
+ * @returns {boolean}
+ */
+function facetedValueIsFoundIn(list){
+    for (var i = 0; i < list.length; i++)
+        if (list[i] instanceof FacetedValue)
+            return true;
+    return false;
+}
+
+/**
+ * @param {Array} list
+ * @return {Boolean}
+ */
+function findFirstFacetedValueIn(list){
+    for (var i = 0; i < list.length; i++)
+        if (list[i] instanceof FacetedValue)
+            return i;
+    return NaN;
 }
