@@ -1,17 +1,10 @@
 process.env.NODE_ENV = 'test';
-
 var FacetedValue = require('../src/FacetedValue.js').bin;
 
 exports.testFacetedValue = {
 
     /**
-     * @see FacetedValue#equals
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     equals: function testEquals(test){
         test.expect(7);
@@ -39,13 +32,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#toString
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     toString: function testToString(test){
         var expected = '<A ? <B ? 1 : 3> : <B ? 5 : 7>>';
@@ -59,16 +46,10 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#unaryOps
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     unaryOps: function testUnaryOps(test){
-        test.expect(23);
+        test.expect(24);
 
         // These operations should mutate the FacetedValue
         var x = new FacetedValue('A', 2, 3);
@@ -95,12 +76,13 @@ exports.testFacetedValue = {
         test.equal(x.toString(), '<A ? 5 : -7>');
 
         // None of these are valid right-ride operations, all should throw errors
-        try { x.unaryOps('+'     , false); } catch(ignored) { test.ok(true); }
-        try { x.unaryOps('-'     , false); } catch(ignored) { test.ok(true); }
-        try { x.unaryOps('!'     , false); } catch(ignored) { test.ok(true); }
-        try { x.unaryOps('~'     , false); } catch(ignored) { test.ok(true); }
-        try { x.unaryOps('typeof', false); } catch(ignored) { test.ok(true); }
-        try { x.unaryOps('void'  , false); } catch(ignored) { test.ok(true); }
+        test.throws(function(){ x.unaryOps('+'     , false); });
+        test.throws(function(){ x.unaryOps('+'     , false); });
+        test.throws(function(){ x.unaryOps('-'     , false); });
+        test.throws(function(){ x.unaryOps('!'     , false); });
+        test.throws(function(){ x.unaryOps('~'     , false); });
+        test.throws(function(){ x.unaryOps('typeof', false); });
+        test.throws(function(){ x.unaryOps('void'  , false); });
 
         // Finally, test recursion
         x = new FacetedValue('A', 2, 3);
@@ -113,13 +95,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#binaryOps
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     binaryOps : function testBinaryOps(test){
         test.expect(52);
@@ -130,13 +106,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#getFacetVisibleVersus
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     getFacetVisibleVersus : function testGetFacetVisibleVersus(test){
         var x = new FacetedValue('A', new FacetedValue('B', 1, 3), new FacetedValue('C', 5, 7));
@@ -153,13 +123,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#apply
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     apply : function testApply(test){
         test.expect(2);
@@ -183,13 +147,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#apply_helper
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     apply_helper : function testApply_helper(test){
         test.expect(2);
@@ -209,13 +167,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#invokeFunction
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     invokeFunction : function testInvokeFunction(test){
         var facetedNumber = new FacetedValue("A", 25, 36);
@@ -228,13 +180,7 @@ exports.testFacetedValue = {
     },
 
     /**
-     * @see FacetedValue#toFacetedArray
-     * @see https://github.com/caolan/nodeunit
-     * @param test
-     * @param {function} test.expect
-     * @param {function} test.equal
-     * @param {function} test.ok
-     * @param {function} test.done
+     * @param {NodeUnit} test
      */
     toFacetedArray : function testToFacetedArray(test){
         test.expect(3);
@@ -252,6 +198,9 @@ exports.testFacetedValue = {
     }
 };
 
+/**
+ * @param {NodeUnit} test
+ */
 function testBinaryOpsRight(test){
     var x = new FacetedValue("A", 2, 3);
     var y = 5;
@@ -295,6 +244,9 @@ function testBinaryOpsRight(test){
     test.equal(x.binaryOps(':', y, false).toString(), '<A ? 1,2,7 : 3,5,7>');
 }
 
+/**
+ * @param {NodeUnit} test
+ */
 function testBinaryOpsLeft(test){
     var y = 5;
     var x = new FacetedValue("A", 2, 3);
@@ -338,6 +290,9 @@ function testBinaryOpsLeft(test){
     test.equal(x.binaryOps(':', y, true).toString(), '<A ? 7,1,3 : 7,1,5>');
 }
 
+/**
+ * @param {NodeUnit} test
+ */
 function testBinaryOpsDoubleFaceted(test){
     var x = new FacetedValue("A", 'a', 'b');
     var y = new FacetedValue('A', 5, 7);
