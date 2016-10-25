@@ -20,6 +20,14 @@ function cloak(facetedValue, associatedView) {
          */
         get: function (ignored, attribute) {
             var val = getVal(attribute);
+            if (typeof val === 'function') {
+                return function () {
+                    var newVal = val.apply(facetedValue, arguments);
+                    if (newVal instanceof FacetedValue)
+                        return cloak(newVal, associatedView);
+                    return newVal;
+                };
+            }
             if (val instanceof FacetedValue)
                 return cloak(val, associatedView);
             return val;
@@ -69,10 +77,12 @@ function cloak(facetedValue, associatedView) {
      */
     function dataIsNotExposedBy(attribute){
         switch(attribute){
-            case 'binaryOperation':
-            case 'unaryOperation':
+            case 'binaryOps':
+            case 'unaryOps':
             case 'apply':
+                return true;
         }
+        return false;
     }
 
     //noinspection JSUnresolvedFunction
