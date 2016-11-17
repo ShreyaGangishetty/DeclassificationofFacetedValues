@@ -1,0 +1,32 @@
+operator ++     15 { $op }  => #{ $op.$unaryOps("++"    ) }
+operator --     15 { $op }  => #{ $op.$unaryOps("--"    ) }
+operator !      14 { $op }  => #{ $op.$unaryOps("!"     ) }
+operator ~      14 { $op }  => #{ $op.$unaryOps("~"     ) }
+operator +      14 { $op }  => #{ $op.$unaryOps("+"     ) }
+operator -      14 { $op }  => #{ $op.$unaryOps("-"     ) }
+operator typeof 14 { $op }  => #{ $op.$unaryOps("typeof") }
+operator void   14 { $op }  => #{ $op.$unaryOps("void"  ) }
+
+operator *          13 left { $left, $right } => #{ biOps($left, "*",          $right) }
+operator /          13 left { $left, $right } => #{ biOps($left, "/",          $right) }
+operator %          13 left { $left, $right } => #{ biOps($left, "%",          $right) }
+operator +          12 left { $left, $right } => #{ biOps($left, "+",          $right) }
+operator -          12 left { $left, $right } => #{ biOps($left, "-",          $right) }
+operator >>         11 left { $left, $right } => #{ biOps($left, ">>",         $right) }
+operator <<         11 left { $left, $right } => #{ biOps($left, "<<",         $right) }
+operator >>>        11 left { $left, $right } => #{ biOps($left, ">>>",        $right) }
+operator <          10 left { $left, $right } => #{ biOps($left, "<",          $right) }
+operator <=         10 left { $left, $right } => #{ biOps($left, "<=",         $right) }
+operator >=         10 left { $left, $right } => #{ biOps($left, ">",          $right) }
+operator >          10 left { $left, $right } => #{ biOps($left, ">=",         $right) }
+operator in         10 left { $left, $right } => #{ biOps($left, "in",         $right) }
+operator instanceof 10 left { $left, $right } => #{ biOps($left, "instanceof", $right) }
+operator ==          9 left { $left, $right } => #{ biOps($left, "==",         $right) }
+operator !=          9 left { $left, $right } => #{ biOps($left, "!=",         $right) }
+operator ===         9 left { $left, $right } => #{ biOps($left, "===",        $right) }
+operator !==         9 left { $left, $right } => #{ biOps($left, "!==",        $right) }
+operator &           8 left { $left, $right } => #{ biOps($left, "&",          $right) }
+operator ^           7 left { $left, $right } => #{ biOps($left, "^",          $right) }
+operator |           6 left { $left, $right } => #{ biOps($left, "|",          $right) }
+operator &&          5 left { $left, $right } => #{ biOps($left, "&&",         $right) }
+operator ||          4 left { $left, $right } => #{ biOps($left, "||",         $right) }

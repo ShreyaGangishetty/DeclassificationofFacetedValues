@@ -5,6 +5,9 @@ var FacetedValue = require('../src/FacetedValue.js').bin;
  *
  * @param {FacetedValue} facetedValue
  * @param {Array<String>} associatedView
+ * @property {Function} $binaryOps - {@link FacetedValue#binaryOps}
+ * @property {Function} $unaryOps - {@link FacetedValue#unaryOps}
+ * @property {Function} $apply - {@link FacetedValue#apply}
  */
 function cloak(facetedValue, associatedView) {
 
@@ -88,15 +91,3 @@ function cloak(facetedValue, associatedView) {
     //noinspection JSUnresolvedFunction
     return new Proxy(facetedValue, handler);
 }
-
-(function() {
-    var v = ["A"];
-    //noinspection JSUnresolvedFunction
-    var p = cloak(new FacetedValue("A", 1, 2), v);
-    var x = p;
-    var y = p + 1;
-    console.log(y);
-    v.pop();
-    y = p + 1;
-    console.log(y);
-})();
