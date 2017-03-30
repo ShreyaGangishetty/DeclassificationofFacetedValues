@@ -24,7 +24,7 @@ performProcessingPhase(tree, propagateFacetings);
 /* ********************* EXPORT **********************************************************/
 var outputfile = tree.toString();
 console.log(currentScope.toString());
-fs.writeFileSync('ast-query/outputFile.js', outputfile);
+fs.writeFileSync('ast-query/outputFile.js', outputfile); // TODO: Why is this so sloooooowwwww
 
 
 /* ************************* CORE FUNCTIONS *******************************************/
@@ -164,7 +164,7 @@ function overlayInformationFlows(node){
             node.left.outgoingFlows.push(node);
             break;
         case 'ExpressionStatement':
-            node.expression.outgoingFlows.push(node);
+            node.outgoingFlows.push(node.expression);
             break;
         case 'FunctionDeclaration':
         case 'FunctionExpression': // TODO: flow from identifier to function, thence to CallExpression
@@ -191,6 +191,23 @@ function overlayInformationFlows(node){
                 node.init.outgoingFlows.push(node);
             break;
     }
+}
+
+/**
+ * This walks the AST and, wherever something isFaceted, it follows the information flows plotted out in the previous
+ * pass to mark those nodes as also being faceted.
+ *
+ * @param {ASTNode} node
+ */
+function propagateFacetings(node){
+   if (node.isFaceted)
+       node.outgoingFlows.forEach(propagate);
+   function propagate(node){
+       if (node.isFaceted)
+           return; //avoid cycles
+       node.isFaceted = true;
+       node.outgoingFlows.forEach(propagate);
+   }
 }
 
 /* **************************** HELPERS *********************************************/
