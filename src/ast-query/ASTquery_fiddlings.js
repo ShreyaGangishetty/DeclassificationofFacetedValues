@@ -15,14 +15,17 @@ var tree = astq(inputfile);
 
 /* **************** PROCESS ******************************************************************/
 var currentScope = new Scope();
-tree.body.node.forEach(searchAndSubstitute);
+tree.body.node.forEach(function(node){
+    forEachIn(node, substituteFacetedValue);
+});
 postProcessCallExpressions();
 
 function processFunctionDeclaration(node) {
+    currentScope = new Scope(node, currentScope);
 }
 
-
 function processCallExpression(node) {
+    currentScope.addFunctionCall(node);
 }
 
 function postProcessCallExpressions(){
@@ -47,36 +50,37 @@ function replaceLeftNodeWithRight(left, right) {
             left[i] = right[i];
 }
 
-function processLiteral(node) {
-    if (typeof node.value === 'string'){
-        try{
-            var match = node.value.match(FacetedValue.REGEX);
-            var a = match[1];
-            var b = match[2];
-            var c = match[3];
-            var replacementString = 'new FacetedValue(' + a + ', ' + b + ', ' + c + ')';
-            // Note that in the following, body.node[0] is an ExpressionStatement.
-            // E.g. it is a complete statement containing an expression, closed with a semicolon.
-            // Therefore it is necessary to extract the `new` expression contained therein, to avoid the semicolon.
-            var newExpression = astq(replacementString).body.node[0].expression;
-            replaceLeftNodeWithRight(node, newExpression);
-        } catch(ignored){}
-    }
-}
-
 /**
  *
  * @param {ASTNode} node
  */
-function searchAndSubstitute(node){
+function substituteFacetedValue(node){
+    if (node.type === 'Literal') {
+        if (typeof node.value === 'string') {
+            try {
+                var m = node.value.match(FacetedValue.REGEX);
+                var replacementString = 'new FacetedValue(' + m[1] + ', ' + m[2] + ', ' + m[3] + ')';
+                // Note that in the following, body.node[0] is an ExpressionStatement.
+                // E.g. it is a complete statement containing an expression, closed with a semicolon.
+                // Therefore it is necessary to extract the `new` expression contained therein, to avoid the semicolon.
+                var newExpression = astq(replacementString).body.node[0].expression;
+                replaceLeftNodeWithRight(node, newExpression);
+                node.isFaceted = true;
+            } catch (ignored) {
+            }
+        }
+    }
+}
 
-    var cleanupFunction;
-
+//noinspection JSUnusedLocalSymbols
+/**
+ * @param {ASTNode} node
+ */
+function template(node){
     switch (node.type){
-        case 'CallExpression': processCallExpression(node); break;
-        case 'FunctionDeclaration': processFunctionDeclaration(node); break;
-        case 'Literal': processLiteral(node); break;
-        /* Most do not require modification: */
+        case 'CallExpression':
+        case 'FunctionDeclaration':
+        case 'Literal':
         case 'AssignmentExpression':
         case 'BlockStatement':
         case 'ExpressionStatement':
@@ -87,23 +91,29 @@ function searchAndSubstitute(node){
         case 'VariableDeclaration':
         case 'VariableDeclarator':
             break;
-        default: throw new Error('searchAndSubstitute does not yet accommodate Node.type="' + node.type + '"');
+        default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
     }
+}
 
+/**
+ * Recursively operates the functor upon the given AST node and all of its children.
+ *
+ * @param {ASTNode} node
+ * @param {ASTNodeFunctor} functor
+ */
+function forEachIn(node, functor){
+    functor(node);
     for (var property in node) {
+        //noinspection JSUnfilteredForInLoop
         var value = node[property];
         if (isAnASTNode(value))
-            searchAndSubstitute(value);
+            forEachIn(value, functor);
         if (isArray(value)) {
             value.forEach(function (element) {
                 if (isAnASTNode(element))
-                    searchAndSubstitute(element);
+                    forEachIn(element, functor);
             });
         }
-    }
-
-    switch(node.type){
-        case 'FunctionDeclaration':
     }
 }
 
