@@ -16,6 +16,7 @@ var tree = astq(inputfile);
 var functionDeclarations = [];
 var callExpressions = [];
 tree.body.node.forEach(searchAndSubstitute);
+postProcessCallExpressions();
 
 /**
  * Note that the code here operates on the assumption that the regex is a complete (e.g. /^$/) match from beginning
