@@ -15,23 +15,11 @@ function Scope(owner, parent){
     this._owner = owner;
 
     /**
-     * @type {Object.<string,ASTNode>}
-     * @private
-     */
-    this._functionsDeclared = {};
-
-    /**
      *
      * @type {Object.<string,ASTNode>}
      * @private
      */
-    this._facetedValues = {};
-
-    /**
-     * @type {Array<ASTNode>}
-     * @private
-     */
-    this._functionCalls = [];
+    this._symbols = {};
 
     /**
      * @type {Scope}
@@ -50,31 +38,34 @@ function Scope(owner, parent){
 }
 
 /**
- * @param identifier
+ * @returns {Scope}
+ */
+Scope.prototype.getParent = function getParent(){
+    return this._parent;
+}
+
+/**
+ * @param {string} identifier
  * @returns {ASTNode}
  */
-Scope.prototype.getFunctionNamed = function getFunctionNamed(identifier){
-    var func = this._functionsDeclared[identifier];
-    if (typeof func === 'function')
-        return func;
+Scope.prototype.getNodeNamed = function getFunctionNamed(identifier){
+    var node = this._symbols[identifier];
+    if (!!node)
+        return node;
     if (this._parent)
-        return this._parent.getFunctionNamed(identifier);
+        return this._parent.getNodeNamed(identifier);
     return undefined;
 }
 
 /**
+ * Adds the symbol to the dictionary of symbols (i.e. functions and variables) visible within this scope
  * @param {ASTNode} node
+ * @return {boolean} true if this scope already had a symbol with that name
  */
-Scope.prototype.registerFunctionDeclaration = function registerFunctionDeclaration(node){
-    this._functionsDeclared[node.name] = node;
-}
-
-/**
- *
- * @param {ASTNode} callExpression
- */
-Scope.prototype.addFunctionCall = function addFunctionCall(callExpression){
-    this._functionCalls.push(callExpression);
+Scope.prototype.registerSymbol = function registerSymbol(node){
+    var alreadyRegistered = !!this._symbols[node.name];
+    this._symbols[node.name] = node;
+    return alreadyRegistered;
 }
 
 /**
@@ -91,6 +82,24 @@ Scope.prototype.forEach = function forEach(functor){
     this._children.forEach(function(childScope){
         childScope.forEach(functor);
     });
+}
+
+/**
+ * @return {string} JSON.stringify'd rendition of {@link Scope#viewSimplifiedVersion}
+ */
+Scope.prototype.toString = function toString(){
+    return JSON.stringify(this.viewSimplifiedVersion(), null, 3);
+}
+
+/**
+ * @returns {{symbols: string, children: Array}} -- a simplified object simply containing the names of the symbols
+ * in this scope, and the scopes that are its children. Recursive descent.
+ */
+Scope.prototype.viewSimplifiedVersion = function viewSimplifiedVersion(){
+    return {
+        symbols: Object.keys(this._symbols).join(),
+        children: this._children.map(function(c){return c.viewSimplifiedVersion();})
+    };
 }
 
 exports.bin = Scope;
