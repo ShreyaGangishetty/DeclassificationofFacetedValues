@@ -1,4 +1,4 @@
-exports.bin = FacetedValue;
+exports.bin = FacetedValue; // TODO: Figure out how to get rid of this .bin !
 //noinspection JSUnresolvedVariable,JSUnusedGlobalSymbols
 Symbol = Symbol || function noop(){};
 
