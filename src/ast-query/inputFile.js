@@ -1,5 +1,5 @@
 var a = 'foo';
-var b = '<admin ? 42 : 0>';
+var b = '<"admin" ? 42 : 0>';
 var c = 7;
 
 // described step-by-step in TOPLAS

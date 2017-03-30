@@ -1,5 +1,5 @@
 var a = 'foo';
-var b = '<admin ? 42 : 0>';
+var b = new FacetedValue('admin', 42, 0);
 var c = 7;
 // described step-by-step in TOPLAS
 function f(sec) {
@@ -14,5 +14,5 @@ function f(sec) {
     return leak;
 }
 // These should be indistinguishable to unprivileged observers
-f('<x ? true : false>');
-f('<x ? false : false>');
+f(new FacetedValue(x, true, false));
+f(new FacetedValue(x, false, false));

@@ -7,7 +7,7 @@
 /* ****************** IMPORT ****************************************************************/
 var astq = require("ast-query");
 var fs = require('fs');
-var FacetedValue = require('../FacetedValue.js')
+var FacetedValue = require('../FacetedValue.js').bin;
 
 var inputfile = fs.readFileSync('ast-query/inputFile.js');
 var tree = astq(inputfile);
@@ -17,34 +17,6 @@ var functionDeclarations = [];
 var callExpressions = [];
 tree.body.node.forEach(searchAndSubstitute);
 postProcessCallExpressions();
-
-/**
- * Note that the code here operates on the assumption that the regex is a complete (e.g. /^$/) match from beginning
- * to end, and if that changes so must this code
- *
- * @param {ASTNode} node
- */
-function processAssignmentExpression(node) {
-    /* TODO this is where a substitution can happen, e.g.
-        x = '<a ? b : c>'
-        becomes:
-        x = new FacetedValue(a, b, c);
-    */
-    convertLiteral(node.right);
-}
-
-function convertLiteral(node) {
-    try{
-        var match = node.value.match(FacetedValue.REGEX);
-        var replacementString = 'new FacetedValue(' + a + ', ' + b + ',' + c + ')';
-    } catch(ignored){}
-}
-
-
-function processVariableDeclarator(node) {
-
-}
-
 
 function processFunctionDeclaration(node) {
     // TODO figure out a way to deal with shadowed names
@@ -59,6 +31,41 @@ function processCallExpression(node) {
 
 function postProcessCallExpressions(){
     // TODO
+}
+
+/**
+ * A bit of a hack. This is intended to entirely replace one node with another.
+ * TODO: Check with Dr. Austin, am I missing something on this?
+ * @example '<a ? b : c>' node of type 'Literal' becomes a node of type 'ExpressionStatement' that corresponds to
+ *      `new FacetedValue(a, b, c)`.
+ * @param left
+ * @param right
+ */
+function replaceLeftNodeWithRight(left, right) {
+    var i;
+    for (i in left)
+        if (left.hasOwnProperty(i))
+            left[i] = right[i];
+    for (i in right)
+        if (right.hasOwnProperty(i))
+            left[i] = right[i];
+}
+
+function processLiteral(node) {
+    if (typeof node.value === 'string'){
+        try{
+            var match = node.value.match(FacetedValue.REGEX);
+            var a = match[1];
+            var b = match[2];
+            var c = match[3];
+            var replacementString = 'new FacetedValue(' + a + ', ' + b + ', ' + c + ')';
+            // Note that in the following, body.node[0] is an ExpressionStatement.
+            // E.g. it is a complete statement containing an expression, closed with a semicolon.
+            // Therefore it is necessary to extract the `new` expression contained therein, to avoid the semicolon.
+            var newExpression = astq(replacementString).body.node[0].expression;
+            replaceLeftNodeWithRight(node, newExpression);
+        } catch(ignored){}
+    }
 }
 
 /**
@@ -79,19 +86,19 @@ function searchAndSubstitute(node){
     }
 
     switch (node.type){
-        case 'AssignmentExpression': processAssignmentExpression(node); break;
         case 'CallExpression': processCallExpression(node); break;
         case 'FunctionDeclaration': processFunctionDeclaration(node); break;
-        case 'VariableDeclarator': processVariableDeclarator(node); break;
+        case 'Literal': processLiteral(node); break;
         /* Most do not require modification: */
+        case 'AssignmentExpression':
         case 'BlockStatement':
         case 'ExpressionStatement':
         case 'Identifier':
         case 'IfStatement':
-        case 'Literal':
         case 'ReturnStatement':
         case 'UnaryExpression': // TODO double-check
         case 'VariableDeclaration':
+        case 'VariableDeclarator':
             break;
         default: throw new Error('searchAndSubstitute does not yet accommodate Node.type="' + node.type + '"');
     }
