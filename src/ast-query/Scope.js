@@ -70,10 +70,6 @@ Scope.prototype.registerFunctionDeclaration = function registerFunctionDeclarati
 }
 
 /**
- * @param {ASTNode} node
- */
-
-/**
  *
  * @param {ASTNode} callExpression
  */

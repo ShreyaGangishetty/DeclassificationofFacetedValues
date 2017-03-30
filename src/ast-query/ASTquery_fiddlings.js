@@ -2,8 +2,6 @@
 
  */
 
-
-
 /* ****************** IMPORT ****************************************************************/
 var astq = require("ast-query");
 var fs = require('fs');
@@ -11,50 +9,31 @@ var FacetedValue = require('../FacetedValue.js').bin;
 var Scope = require('./Scope.js').bin;
 
 var inputfile = fs.readFileSync('ast-query/inputFile.js');
+
+/**
+ * @type {Tree}
+ */
 var tree = astq(inputfile);
 
 /* **************** PROCESS ******************************************************************/
 var currentScope = new Scope();
-tree.body.node.forEach(function(node){
-    forEachIn(node, substituteFacetedValue);
-});
-postProcessCallExpressions();
+performProcessingPhase(tree, substituteFacetedValues);
+performProcessingPhase(tree, overlayScoping);
+//performProcessingPhase(tree, propagateFaceting);
 
-function processFunctionDeclaration(node) {
-    currentScope = new Scope(node, currentScope);
-}
+/* ********************* EXPORT **********************************************************/
+var outputfile = tree.toString();
+console.log(outputfile);
+fs.writeFileSync('ast-query/outputFile.js', outputfile);
 
-function processCallExpression(node) {
-    currentScope.addFunctionCall(node);
-}
 
-function postProcessCallExpressions(){
-    // TODO
-}
+/* ************************* CORE FUNCTIONS *******************************************/
 
 /**
- * A bit of a hack. This is intended to entirely replace one node with another.
- * TODO: Check with Dr. Austin, am I missing something on this?
- * @example '<a ? b : c>' node of type 'Literal' becomes a node of type 'ExpressionStatement' that corresponds to
- *      `new FacetedValue(a, b, c)`.
- * @param left
- * @param right
- */
-function replaceLeftNodeWithRight(left, right) {
-    var i;
-    for (i in left)
-        if (left.hasOwnProperty(i))
-            left[i] = right[i];
-    for (i in right)
-        if (right.hasOwnProperty(i))
-            left[i] = right[i];
-}
-
-/**
- *
+ * On this pass, it simply finds all string 'Literal" nodes and rewrites the AST to use a new FacetedValue instead.
  * @param {ASTNode} node
  */
-function substituteFacetedValue(node){
+function substituteFacetedValues(node){
     if (node.type === 'Literal') {
         if (typeof node.value === 'string') {
             try {
@@ -72,28 +51,7 @@ function substituteFacetedValue(node){
     }
 }
 
-//noinspection JSUnusedLocalSymbols
-/**
- * @param {ASTNode} node
- */
-function template(node){
-    switch (node.type){
-        case 'CallExpression':
-        case 'FunctionDeclaration':
-        case 'Literal':
-        case 'AssignmentExpression':
-        case 'BlockStatement':
-        case 'ExpressionStatement':
-        case 'Identifier':
-        case 'IfStatement':
-        case 'ReturnStatement':
-        case 'UnaryExpression': // TODO double-check
-        case 'VariableDeclaration':
-        case 'VariableDeclarator':
-            break;
-        default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
-    }
-}
+/* **************************** HELPERS *********************************************/
 
 /**
  * Recursively operates the functor upon the given AST node and all of its children.
@@ -135,9 +93,54 @@ function isArray(value) {
     return typeof value === 'object' && Object.prototype.toString.call(value) === '[object Array]';
 }
 
-/* ********************* EXPORT **********************************************************/
-var outputfile = tree.toString();
-console.log(outputfile);
-fs.writeFileSync('ast-query/outputFile.js', outputfile);
+//noinspection JSUnusedLocalSymbols
+/**
+ * @param {ASTNode} node
+ */
+function template(node){
+    switch (node.type){
+        case 'CallExpression':
+        case 'FunctionDeclaration':
+        case 'Literal':
+        case 'AssignmentExpression':
+        case 'BlockStatement':
+        case 'ExpressionStatement':
+        case 'Identifier':
+        case 'IfStatement':
+        case 'ReturnStatement':
+        case 'UnaryExpression': // TODO double-check
+        case 'VariableDeclaration':
+        case 'VariableDeclarator':
+            break;
+        default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
+    }
+}
 
+/**
+ * A bit of a hack. This is intended to entirely replace one node with another.
+ * TODO: Check with Dr. Austin, am I missing something on this?
+ * @example '<a ? b : c>' node of type 'Literal' becomes a node of type 'ExpressionStatement' that corresponds to
+ *      `new FacetedValue(a, b, c)`.
+ * @param left
+ * @param right
+ */
+function replaceLeftNodeWithRight(left, right) {
+    var i;
+    for (i in left)
+        if (left.hasOwnProperty(i))
+            left[i] = right[i];
+    for (i in right)
+        if (right.hasOwnProperty(i))
+            left[i] = right[i];
+}
 
+/**
+ *
+ * @param {Tree} astqResult
+ * @param {Function} functor
+ */
+function performProcessingPhase(astqResult, functor){
+    astqResult.body.node.forEach(function(node){
+        forEachIn(node, functor);
+    });
+}
