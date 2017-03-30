@@ -8,25 +8,21 @@
 var astq = require("ast-query");
 var fs = require('fs');
 var FacetedValue = require('../FacetedValue.js').bin;
+var Scope = require('./Scope.js').bin;
 
 var inputfile = fs.readFileSync('ast-query/inputFile.js');
 var tree = astq(inputfile);
 
 /* **************** PROCESS ******************************************************************/
-var functionDeclarations = [];
-var callExpressions = [];
+var currentScope = new Scope();
 tree.body.node.forEach(searchAndSubstitute);
 postProcessCallExpressions();
 
 function processFunctionDeclaration(node) {
-    // TODO figure out a way to deal with shadowed names
-    functionDeclarations.push(node);
 }
 
 
 function processCallExpression(node) {
-    // TODO: figure out a way to deal with shadowed names
-    callExpressions.push(node);
 }
 
 function postProcessCallExpressions(){
@@ -73,17 +69,8 @@ function processLiteral(node) {
  * @param {ASTNode} node
  */
 function searchAndSubstitute(node){
-    for (var property in node) {
-        var value = node[property];
-        if (isAnASTNode(value))
-            searchAndSubstitute(value);
-        if (isArray(value)) {
-            value.forEach(function (element) {
-                if (isAnASTNode(element))
-                    searchAndSubstitute(element);
-            });
-        }
-    }
+
+    var cleanupFunction;
 
     switch (node.type){
         case 'CallExpression': processCallExpression(node); break;
@@ -101,6 +88,22 @@ function searchAndSubstitute(node){
         case 'VariableDeclarator':
             break;
         default: throw new Error('searchAndSubstitute does not yet accommodate Node.type="' + node.type + '"');
+    }
+
+    for (var property in node) {
+        var value = node[property];
+        if (isAnASTNode(value))
+            searchAndSubstitute(value);
+        if (isArray(value)) {
+            value.forEach(function (element) {
+                if (isAnASTNode(element))
+                    searchAndSubstitute(element);
+            });
+        }
+    }
+
+    switch(node.type){
+        case 'FunctionDeclaration':
     }
 }
 
