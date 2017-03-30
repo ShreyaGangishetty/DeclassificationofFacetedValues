@@ -38,6 +38,13 @@ function Scope(owner, parent){
 }
 
 /**
+ * @returns {ASTNode} - returns a node of type "FunctionDeclaration" or "FunctionExpression" which spawned this Scope
+ */
+Scope.prototype.getOwningFunction = function getOwningFunction(){
+    return this._owner;
+}
+
+/**
  * @returns {Scope}
  */
 Scope.prototype.getParent = function getParent(){
@@ -59,12 +66,13 @@ Scope.prototype.getNodeNamed = function getFunctionNamed(identifier){
 
 /**
  * Adds the symbol to the dictionary of symbols (i.e. functions and variables) visible within this scope
+ * @param {string} name
  * @param {ASTNode} node
  * @return {boolean} true if this scope already had a symbol with that name
  */
-Scope.prototype.registerSymbol = function registerSymbol(node){
-    var alreadyRegistered = !!this._symbols[node.name];
-    this._symbols[node.name] = node;
+Scope.prototype.registerSymbol = function registerSymbol(name, node){
+    var alreadyRegistered = !!this._symbols[name];
+    this._symbols[name] = node;
     return alreadyRegistered;
 }
 

@@ -6,6 +6,8 @@
  * @class
  * @typedef {Object} ASTNode
  * @property {ASTNode} alternate -- false-expression for if statement
+ * @property {ASTNode} argument -- the body of a return statement, perhaps seen elsewhere as well
+ * @property {Array<ASTNode>} arguments -- list of nodes passed to function in a CallStatement
  * @property {ASTNode|Array<ASTNode>} body -- the body of a FunctionDeclaration is typically a BlockStatement, while the
  *                                            body of a BlockStatement is an array of nodes.
  * @property {ASTNode} callee -- function being called, which has an ASTNode.name
@@ -22,6 +24,8 @@
  * @property {ASTNode} left -- left operand in an expression
  * @property {string} name
  * @property {string} operator -- found in expression nodes
+ * @property {Array<ASTNode>} outgoingFlows -- not built-in to AST-query, this shows direct information flows from one
+ *                                             node to another. In total they form a graph over the AST, often cyclic
  * @property {Array<ASTNode>} params
  * @property {ASTNode} right -- right operand in an expression
  * @property {Scope} scope -- not built-in to AST-query, this indicates the scope in which the node resides
