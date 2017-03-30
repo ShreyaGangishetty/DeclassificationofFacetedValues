@@ -83,6 +83,7 @@ exports.testcloak = {
      * @param {NodeUnit} test
      */
     methodsInaccessible: function methodsInaccessible(test){
+        test.expect(7);
         var fv = new FacetedValue("A", 1, 2);
         var fv2 = new FacetedValue("A", function(){}, function(){});
         var v = [];
@@ -102,6 +103,7 @@ exports.testcloak = {
      * @param {NodeUnit} test
      */
     dataInaccessible: function dataInaccessible(test){
+        test.expect(2);
         var x = cloak(new FacetedValue("A", 1, 2), []);
         test.equal(x.leftValue, undefined);
         test.equal(x.rightValue, undefined);

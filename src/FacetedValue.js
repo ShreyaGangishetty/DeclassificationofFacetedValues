@@ -266,7 +266,7 @@ FacetedValue.prototype.apply = function apply(thisArg, argArray){
  * var facetedResult = facetedFunction.apply_helper(this, 3, 5);
  * console.log('result: ' + facetedResult.toString());  // result: <bleagh ? 8 : 15>
  *
- * @param {Object|FacetedValue<Object>} thisArg
+ * @param {Object|FacetedValue<Object>} [thisArg]
  * @returns {FacetedValue}
  */
 FacetedValue.prototype.apply_helper = function apply_helper(thisArg){
@@ -291,7 +291,13 @@ FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
     return new FacetedValue(this.view, newLeft, newRight);
 };
 
-/* ******************************* "Static" functions ***************************************************/
+/* ******************************* "Static" members ***************************************************/
+
+/**
+ * TODO: description
+ * @type {RegExp}
+ */
+FacetedValue.REGEX = /^<(\w+) \? (\w+) : (\w>)$/;
 
 /**
  * When one or more FacetedValues are to be given as arguments to a function that is not itself FacetedValues-aware,
@@ -544,6 +550,8 @@ function simplify(facetedValue){
  * @returns {boolean}
  */
 function facetedValueIsFoundIn(list){
+    if (list == undefined)
+        return false;
     for (var i = 0; i < list.length; i++)
         if (list[i] instanceof FacetedValue)
             return true;

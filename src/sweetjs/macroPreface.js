@@ -33,9 +33,3 @@ function biOps(left, op, right, opOnPrimitives){
 }
 
 var currentView = [];
-
-
-var Cloak$1399 = require('../src/Cloak.js').bin;
-var FacetedValue$1400 = require('../src/FacetedValue.js').bin;
-var x$1401 = cloak(42);
-x$1401;

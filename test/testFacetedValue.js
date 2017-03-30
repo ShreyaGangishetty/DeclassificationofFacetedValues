@@ -142,7 +142,7 @@ exports.testFacetedValue = {
 
         // TODO: faceted thisArg
         // TODO: mix of faceted, nonfaceted arguments
-
+        // TODO: empty arg list
         test.done();
     },
 
@@ -151,6 +151,8 @@ exports.testFacetedValue = {
      */
     apply_helper : function testApply_helper(test){
         test.expect(2);
+        // TODO optional thisArg
+        // TODO empty arg list
         var foo1 = function(x, y){ return x + y; };
         var foo2 = function(x, y){ return x * y; };
         var facetedFunction = new FacetedValue('bleagh', foo1, foo2);
