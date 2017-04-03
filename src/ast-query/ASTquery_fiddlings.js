@@ -19,13 +19,13 @@ performProcessingPhase(tree, overlayScoping);
 performProcessingPhase(tree, prepForInformationFlows);
 performProcessingPhase(tree, linkIdentifiers);
 performProcessingPhase(tree, overlayInformationFlows);
-performProcessingPhase(tree, propagateFacetings);
+performProcessingPhase(tree, markFaceting);
+performProcessingPhase(tree, refactorOperationsToBeFaceted);
 
 /* ********************* EXPORT **********************************************************/
 var outputfile = tree.toString();
 console.log(currentScope.toString());
 fs.writeFileSync('ast-query/outputFile.js', outputfile); // TODO: Why is this so sloooooowwwww
-
 
 /* ************************* CORE FUNCTIONS *******************************************/
 
@@ -131,7 +131,7 @@ function linkIdentifiers(node){
  * of information flows from symbols to symbols. You can expect this graph to be completely arbitrary, by no means
  * anything so specific as a tree or bipartite graph.
  *
- * This is the most extensive and complicated part of the program, because nearly any node type within the abstract
+ * This is the a more extensive and complicated part of the program, because nearly any node type within the abstract
  * syntax tree can have its own unique manner of information flow, and so each must be examined individually. Its
  * functioning also depends on the scope structure being correctly overlaid in the previous path.
  *
@@ -199,7 +199,7 @@ function overlayInformationFlows(node){
  *
  * @param {ASTNode} node
  */
-function propagateFacetings(node){
+function markFaceting(node){
    if (node.isFaceted)
        node.outgoingFlows.forEach(propagate);
    function propagate(node){
@@ -208,6 +208,50 @@ function propagateFacetings(node){
        node.isFaceted = true;
        node.outgoingFlows.forEach(propagate);
    }
+}
+
+/**
+ * @example fv + b ===>
+ * @param node
+ */
+function refactorOperationsToBeFaceted(node){
+    if (node.isFaceted){
+        switch (node.type) {
+            case 'BinaryExpression':
+                debugger;
+                break;
+            case 'CallExpression':
+                debugger;
+                break;
+            case 'FunctionDeclaration':
+                debugger;
+                break;
+            case 'FunctionExpression':
+                debugger;
+                break;
+            case 'Literal':
+                debugger;
+                break;
+            case 'AssignmentExpression':
+                debugger;
+                break;
+            case 'BlockStatement':
+                debugger;
+                break;
+            case 'ExpressionStatement':
+                debugger;
+                break;
+            case 'ReturnStatement':
+                debugger;
+                break;
+            case 'UnaryExpression':
+                debugger;
+                break;
+            case 'VariableDeclaration':
+                debugger;
+                break;
+        }
+    }
 }
 
 /* **************************** HELPERS *********************************************/
