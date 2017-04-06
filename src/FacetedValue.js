@@ -523,23 +523,27 @@ function setsAreTheSame(view, view2) {
  */
 function simplify(facetedValue){
 
+    if (!(facetedValue instanceof FacetedValue))
+        return facetedValue;
+    facetedValue.leftValue = simplify(facetedValue.leftValue);
+    facetedValue.rightValue = simplify(facetedValue.rightValue);
+
     // <X ? a : a> ==> a
-    if (facetedValue.leftValue === facetedValue.rightValue)
+    if (facetedValue.leftValue === facetedValue.rightValue
+        || (facetedValue.leftValue.equals && facetedValue.leftValue.equals(facetedValue.rightValue))
+        || (facetedValue.rightValue.equals && facetedValue.rightValue.equals(facetedValue.rightValue)))
         return facetedValue.leftValue;
 
-    if (facetedValue.valuesAreThemselvesFaceted){
+    // <X ? <X ? a : b> : c> ===> <X ? a : c>
+    if (facetedValue.leftValue instanceof FacetedValue
+        && leftSetContainsRightSet(facetedValue.view, facetedValue.leftValue.view))
+        return simplify(new FacetedValue(facetedValue.view, facetedValue.leftValue.leftValue, facetedValue.rightValue));
 
-        // <X ? <Y ? a : b> : <Y ? a : b>> ===> <Y ? a : b>
-        if(facetedValue.leftValue.equals(facetedValue.rightValue))
-            return simplify(facetedValue.leftValue);
+    // <X ? a : <X ? b : c>> ===> <X ? a : c>
+    if (facetedValue.leftValue instanceof FacetedValue
+        && leftSetContainsRightSet(facetedValue.view, facetedValue.rightValue.view))
+        return simplify(new FacetedValue(facetedValue.view, facetedValue.leftValue, facetedValue.rightValue.rightValue));
 
-        if(facetedValue.leftValue.view.toString() === facetedValue.rightValue.view.toString()) {
-
-            // <X ? <X ? a : b> : <X ? c : d>> ===> <X ? a : d>
-            if(facetedValue.leftValue.view.toString() === facetedValue.view.toString())
-                return simplify(new FacetedValue(facetedValue.leftValue.view, facetedValue.leftValue.leftValue, facetedValue.rightValue.rightValue));
-        }
-    }
     return facetedValue;
 }
 
