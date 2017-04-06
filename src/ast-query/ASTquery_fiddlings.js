@@ -46,6 +46,7 @@ function checkNodeTypeCoverage(node){
         case 'ExpressionStatement':
         case 'Identifier':
         case 'IfStatement':
+        case 'MemberExpression': // TODO Add to all cases as needed
         case 'ReturnStatement':
         case 'UnaryExpression':
         case 'VariableDeclaration':
@@ -73,6 +74,7 @@ function substituteFacetedValues(node){
                 var newExpression = astq(replacementString).body.node[0].expression;
                 replaceLeftNodeWithRight(node, newExpression);
                 node.isFaceted = true;
+                node.wasReconstructedForFVs = true;
             } catch (ignored) {
             }
         }
@@ -98,7 +100,7 @@ function overlayScoping(node){
         if (functionContents.type === 'BlockStatement')
             functionContents = functionContents.body;
         performProcessingPhase(functionContents, overlayScoping);
-        currentScope = currentScope.getParent();
+        currentScope = currentScope.parent;
     }
     else if (node.type === 'VariableDeclarator'){
         currentScope.registerSymbol(node.id.name, node);
@@ -154,10 +156,12 @@ function overlayInformationFlows(node){
             break;
         case 'CallExpression':
             node.callee.outgoingFlows.push(node); // TODO: Does this need to go the other way too?
-            var t = node.callee.scope.getNodeNamed(node.callee.name);
-            for (i = 0; i < node.arguments.length; i++)
-                if (t.params[i])
-                    node.arguments[i].outgoingFlows.push(t.params[i]);
+            if (node.callee.type === 'Identifier') {
+                var t = node.callee.scope.getNodeNamed(node.callee.name);
+                for (i = 0; i < node.arguments.length; i++)
+                    if (t.params[i])
+                        node.arguments[i].outgoingFlows.push(t.params[i]);
+            } // TODO: It might be a MemberExpression instead of an Identifier
             break;
         case 'AssignmentExpression':
             node.right.outgoingFlows.push(node.left);
@@ -211,13 +215,35 @@ function markFaceting(node){
 }
 
 /**
- * @example fv + b ===>
+ * @example fv + b ===> fv.binaryOps(b, true)
  * @param node
  */
 function refactorOperationsToBeFaceted(node){
     if (node.isFaceted){
+        var newNode, object, operand, operandIsOnLeft, tmp;
         switch (node.type) {
             case 'BinaryExpression':
+                if (node.left.type === 'Identifier' && node.left.isFaceted){
+                    object = node.left;
+                    operand = node.right;
+                    operandIsOnLeft = false;
+                } else if (node.right.type === 'Identifier' && node.right.isFaceted) {
+                    operand = node.left;
+                    object = node.right;
+                    operandIsOnLeft = true;
+                } else {
+                    throw new Error('CRIMINY AND CURSES! A binary expression has been marked as faceted, without' +
+                        ' either its left or right side being faceted identifiers!');
+                }
+                newNode = astq('object.binaryOps("' + node.operator + '", operand, ' + operandIsOnLeft + ')').body.node[0].expression;
+                newNode.callee.object = object;
+                newNode.arguments[1] = operand;
+                currentScope = node.scope;
+                forEachIn(newNode, overlayScoping);
+                forEachIn(newNode, prepForInformationFlows);
+                forEachIn(newNode, overlayInformationFlows);
+                forEachIn(newNode, markFaceting);
+                replaceLeftNodeWithRight(node, newNode);
                 debugger;
                 break;
             case 'CallExpression':
@@ -232,13 +258,7 @@ function refactorOperationsToBeFaceted(node){
             case 'Literal':
                 debugger;
                 break;
-            case 'AssignmentExpression':
-                debugger;
-                break;
             case 'BlockStatement':
-                debugger;
-                break;
-            case 'ExpressionStatement':
                 debugger;
                 break;
             case 'ReturnStatement':
@@ -320,12 +340,13 @@ function replaceLeftNodeWithRight(left, right) {
 }
 
 /**
- * @param {Array<ASTNode>|Tree} container
+ * @param {ASTNode|Array<ASTNode>|Tree} container
  * @param {Function} functor
  */
 function performProcessingPhase(container, functor){
     var iterationTarget = isArray(container) ? container : container.body.node;
-    iterationTarget.forEach(function(node){
+    iterationTarget.forEach(function (node) {
         forEachIn(node, functor);
     });
 }
+

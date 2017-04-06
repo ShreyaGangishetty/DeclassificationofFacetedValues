@@ -23,7 +23,7 @@
  * @property {string} kind
  * @property {ASTNode} left -- left operand in an expression
  * @property {string} name
- * @property {string} operator -- found in expression nodes
+ * @property {string} operator -- found in binary expression nodes
  * @property {Array<ASTNode>} outgoingFlows -- not built-in to AST-query, this shows direct information flows from one
  *                                             node to another. In total they form a graph over the AST, often cyclic
  * @property {Array<ASTNode>} params
@@ -34,6 +34,9 @@
  * @property {string} type -- what type of Node in the AST it is
  * @property {*} value -- what the node evaluates to, e.g. a node with node.type='Literal' with
  *                        string node.raw="false" would have a boolean node.value=false
+ * @property {boolean} wasReconstructedForFVs -- not built-in to AST-queryu, this boolean exists and is true if this is
+ *                                              a node which has been reconstructed in order to facilitate operations
+ *                                              involving faceted values
  */
 
 /**

@@ -22,10 +22,11 @@ function Scope(owner, parent){
     this._symbols = {};
 
     /**
+     * If this is null, then this is the program-level scope
      * @type {Scope}
-     * @private
+     * @public
      */
-    this._parent = parent;
+    this.parent = parent;
 
     /**
      * @type {Array<Scope>}
@@ -33,8 +34,8 @@ function Scope(owner, parent){
      */
     this._children = [];
 
-    if (this._parent)
-        this._parent._children.push(this);
+    if (this.parent)
+        this.parent._children.push(this);
 }
 
 /**
@@ -45,13 +46,6 @@ Scope.prototype.getOwningFunction = function getOwningFunction(){
 }
 
 /**
- * @returns {Scope}
- */
-Scope.prototype.getParent = function getParent(){
-    return this._parent;
-}
-
-/**
  * @param {string} identifier
  * @returns {ASTNode}
  */
@@ -59,8 +53,8 @@ Scope.prototype.getNodeNamed = function getFunctionNamed(identifier){
     var node = this._symbols[identifier];
     if (!!node)
         return node;
-    if (this._parent)
-        return this._parent.getNodeNamed(identifier);
+    if (this.parent)
+        return this.parent.getNodeNamed(identifier);
     return undefined;
 }
 
