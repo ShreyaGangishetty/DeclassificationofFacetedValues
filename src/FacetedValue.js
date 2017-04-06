@@ -128,7 +128,7 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
 
     // I apologize, dear reader, for the following snagglefest. It is necessary for the increments and
     // decrements to have the expected ordering of changing-and-returning, returning-and-changing behaviors.
-    if (operator == '++'){
+    if (operator === '++'){
         if (this.leftValue instanceof FacetedValue)
             newLeft = this.leftValue.unaryOps(operator, operatorIsOnLeft);
         else
@@ -137,7 +137,7 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
             newRight = this.rightValue.unaryOps(operator, operatorIsOnLeft);
         else
             newRight = (operatorIsOnLeft) ? ++this.rightValue : this.rightValue++;
-    } else if (operator == '--'){
+    } else if (operator === '--'){
         if (this.leftValue instanceof FacetedValue)
             newLeft = this.leftValue.unaryOps(operator, operatorIsOnLeft);
         else
@@ -198,13 +198,13 @@ FacetedValue.prototype.equals = function equals(value){
         return false;
 
     var leftEquals;
-    if (this.leftValue && this.leftValue.equals && typeof this.leftValue.equals == 'function')
+    if (this.leftValue && this.leftValue.equals && typeof this.leftValue.equals === 'function')
         leftEquals = this.leftValue.equals(value.leftValue);
     else
         leftEquals = this.leftValue === value.leftValue;
 
     var rightEquals;
-    if (this.rightValue && this.rightValue.equals && typeof this.rightValue.equals == 'function')
+    if (this.rightValue && this.rightValue.equals && typeof this.rightValue.equals === 'function')
         rightEquals = this.rightValue.equals(value.rightValue);
     else
         rightEquals = this.rightValue === value.rightValue;
@@ -500,7 +500,7 @@ function binaryOperationOfPrimitives(operand1, operator, operand2, operand2isOnL
  */
 function leftSetContainsRightSet(leftSet, rightSet){
     if (leftSet instanceof Array)
-        return leftSet.filter(function(val) { return rightSet.indexOf(val) != -1;}).length === rightSet.length;
+        return leftSet.filter(function(val) { return rightSet.indexOf(val) !== -1;}).length === rightSet.length;
     return leftSet === rightSet;
 }
 
@@ -512,7 +512,7 @@ function leftSetContainsRightSet(leftSet, rightSet){
  * @returns {boolean}
  */
 function setsAreTheSame(view, view2) {
-    return leftSetContainsRightSet(view, view2) && view.length == view2.length;
+    return leftSetContainsRightSet(view, view2) && view.length === view2.length;
 }
 
 /**
@@ -533,10 +533,10 @@ function simplify(facetedValue){
         if(facetedValue.leftValue.equals(facetedValue.rightValue))
             return simplify(facetedValue.leftValue);
 
-        if(facetedValue.leftValue.view.toString() == facetedValue.rightValue.view.toString()) {
+        if(facetedValue.leftValue.view.toString() === facetedValue.rightValue.view.toString()) {
 
             // <X ? <X ? a : b> : <X ? c : d>> ===> <X ? a : d>
-            if(facetedValue.leftValue.view.toString() == facetedValue.view.toString())
+            if(facetedValue.leftValue.view.toString() === facetedValue.view.toString())
                 return simplify(new FacetedValue(facetedValue.leftValue.view, facetedValue.leftValue.leftValue, facetedValue.rightValue.rightValue));
         }
     }
@@ -550,7 +550,7 @@ function simplify(facetedValue){
  * @returns {boolean}
  */
 function facetedValueIsFoundIn(list){
-    if (list == undefined)
+    if (list === undefined)
         return false;
     for (var i = 0; i < list.length; i++)
         if (list[i] instanceof FacetedValue)
@@ -560,7 +560,7 @@ function facetedValueIsFoundIn(list){
 
 /**
  * @param {Array} list
- * @return {Boolean}
+ * @return {Number}
  */
 function findFirstFacetedValueIn(list){
     for (var i = 0; i < list.length; i++)
