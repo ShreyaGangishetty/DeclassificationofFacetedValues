@@ -23,7 +23,8 @@ Symbol = Symbol || function noop(){};
  * var y = new Faceted(['B'], 3, 5); // <B ? 5 : 7>
  * x.binaryOps('*', y);              // <A ? <B ? 10 : 14> : <B ? 15 : 21>>
  *
- * @param {String|Array<String>} currentView -- A list of string labels by which the two facets will be differentiated
+ * @param {String|Array<String>|FacetedValue} currentView -- A list of string labels by which the two facets will be
+ *          differentiated. If this parameter is instead a FacetedValue then it will copy the view from there.
  * @param {*} leftValue -- This is the value that corresponds to all the labels in currentView being met; nominally, the
  *          "true" or "private" value.
  * @param {*} [rightValue] -- Optional. This is the value that corresponds to any of the labels in currentView not being
@@ -34,8 +35,8 @@ Symbol = Symbol || function noop(){};
  * @constructor
  */
 function FacetedValue(currentView, leftValue, rightValue, additionalLabel) {
-    if (currentView === undefined || currentView === null)
-        throw new Error("FacetedValue constructor requires the `view` parameter to be a String or Array of Strings");
+    if (currentView instanceof FacetedValue)
+        currentView = currentView.view;
     this.view = (currentView.slice) ? currentView.slice(0) : currentView;
     this.leftValue = leftValue;
     this.rightValue = rightValue || produceGarbageSimilarTo(leftValue);
