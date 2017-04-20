@@ -15,11 +15,14 @@
  * @property {Array<ASTNode>} declarations
  * @property {number} end -- index of program-as-string on which the current node ceases being written
  * @property {boolean|ASTNode|null} expression -- found in alternate and consequent nodes of if statement
+ * @property {Array<String>} faceting -- not built-in to AST-query, this is essentially taint-tracking I do to
+ *                                  figure out which parts of the AST to rewrite, as well as what labels (e.g. what
+ *                                  facets) contribute to that need to rewrite. For example, if an <A? 1 : 2> and
+ *                                  <B? 3 : 4> can reach a node through astNode.outgoingFlows, then it will collect a
+ *                                  list ["A", "B"] which can be used in creating new faceted values.
  * @property {boolean} generator
  * @property {ASTNode} id
  * @property {ASTNode} init
- * @property {boolean} isFaceted -- not built-in to AST-query, this is essentially taint-tracking I do to
- *                                  figure out which parts of the AST to rewrite
  * @property {string} kind
  * @property {ASTNode} left -- left operand in an expression
  * @property {string} name
@@ -32,7 +35,7 @@
  * @property {number} start -- index of program-as-string on which the current node begins being written
  * @property {ASTNode} test -- conditional expression for if statement
  * @property {string} type -- what type of Node in the AST it is
- * @property {*} value -- what the node evaluates to, e.g. a node with node.type='Literal' with
+ * @property {*|String} value -- what the node evaluates to, e.g. a node with node.type='Literal' with
  *                        string node.raw="false" would have a boolean node.value=false
  * @property {boolean} wasReconstructedForFVs -- not built-in to AST-queryu, this boolean exists and is true if this is
  *                                              a node which has been reconstructed in order to facilitate operations

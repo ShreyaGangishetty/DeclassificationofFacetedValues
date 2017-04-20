@@ -3,12 +3,23 @@
  */
 
 /* ****************** IMPORT ****************************************************************/
-var astq = require("ast-query");
+/**
+ * fs is an imported library with various file system functions
+ * @type {Object}
+ * @property {function} readFileSync
+ * @property {function} writeFileSync
+ */
 var fs = require('fs');
+var astq = require("ast-query");
 var FacetedValue = require('../FacetedValue.js').bin;
 var Scope = require('./Scope.js').bin;
 
 var inputfile = fs.readFileSync('ast-query/inputFile.js');
+
+/**
+ * @type {Tree}
+ * @property {Array<ASTNode>} body.node
+ */
 var tree = astq(inputfile);
 
 /* **************** PROCESS ******************************************************************/
@@ -71,9 +82,10 @@ function substituteFacetedValues(node){
                 // Note that in the following, body.node[0] is an ExpressionStatement.
                 // E.g. it is a complete statement containing an expression, closed with a semicolon.
                 // Therefore it is necessary to extract the `new` expression contained therein, to avoid the semicolon.
-                var newExpression = astq(replacementString).body.node[0].expression;
+                var miniTree = astq(replacementString);
+                var newExpression = miniTree.body.node[0].expression;
                 replaceLeftNodeWithRight(node, newExpression);
-                node.isFaceted = true;
+                node.faceting = [m[1]];
                 node.wasReconstructedForFVs = true;
             } catch (ignored) {
             }
@@ -140,11 +152,11 @@ function linkIdentifiers(node){
  * However, it isn't as bad as it looks. Each case within the switch statement is essentially its own function, and you
  * don't really need to look further than the few lines of a given case when considering its logic.
  *
- * @example a = b + 2;  // describes a flow from b to a TODO
- * @example function f(x){}; f(b);  // describes a flow from b to x TODO
+ * @example a = b + 2;  // describes a flow from b to a
+ * @example function f(x){}; f(b);  // describes a flow from b to x
  * @example if (g) h = i; else h = j; k = h; // describes a flow from g to h, g to h, i to h, j to h, and h to k.
- *          // By induction it describes a flow from g to k. TODO
- * @example function f(){return a;}; b = f(); // describes a flow from a to b TODO
+ *          // By induction it describes a flow from g to k.
+ * @example function f(){return a;}; b = f(); // describes a flow from a to b
  * @param {ASTNode} node
  */
 function overlayInformationFlows(node){
@@ -155,7 +167,7 @@ function overlayInformationFlows(node){
             node.right.outgoingFlows.push(node);
             break;
         case 'CallExpression':
-            node.callee.outgoingFlows.push(node); // TODO: Does this need to go the other way too?
+            node.callee.outgoingFlows.push(node);
             if (node.callee.type === 'Identifier') {
                 var t = node.callee.scope.getNodeNamed(node.callee.name);
                 for (i = 0; i < node.arguments.length; i++)
@@ -204,30 +216,42 @@ function overlayInformationFlows(node){
  * @param {ASTNode} node
  */
 function markFaceting(node){
-   if (node.isFaceted)
-       node.outgoingFlows.forEach(propagate);
-   function propagate(node){
-       if (node.isFaceted)
+   if (node.faceting) {
+       node.outgoingFlows.forEach(propagate, [node.faceting]);
+   }
+   function propagate(node, faceting){
+       if (node.faceting && leftSetContainsRightSet(node.faceting, faceting))
            return; //avoid cycles
-       node.isFaceted = true;
+       node.faceting = mergeSets([node.faceting, faceting]);
+       node.faceting = faceting.slice().push;
        node.outgoingFlows.forEach(propagate);
    }
 }
 
 /**
  * @example fv + b ===> fv.binaryOps(b, true)
- * @param node
+ * @param {ASTNode}node
  */
 function refactorOperationsToBeFaceted(node){
-    if (node.isFaceted){
-        var newNode, object, operand, operandIsOnLeft, tmp;
+    if (node.faceting){
+        var newNode, object, operand, operandIsOnLeft;
         switch (node.type) {
+            case 'AssignmentExpression':
+                var unfacetedAssignedValue = node.right;
+                var label; // TODO
+                var replacementString = 'new FacetedValue(' + label + ', placeholder, ' + unfacetedIdentifier + ')';
+                var newExpression = astq(replacementString).body.node[0].expression;
+                replaceLeftNodeWithRight(node, newExpression);
+                node.faceting = [label];
+                node.wasReconstructedForFVs = true;
+                debugger;
+                break;
             case 'BinaryExpression':
-                if (node.left.type === 'Identifier' && node.left.isFaceted){
+                if (node.left.type === 'Identifier' && node.left.faceting){
                     object = node.left;
                     operand = node.right;
                     operandIsOnLeft = false;
-                } else if (node.right.type === 'Identifier' && node.right.isFaceted) {
+                } else if (node.right.type === 'Identifier' && node.right.faceting) {
                     operand = node.left;
                     object = node.right;
                     operandIsOnLeft = true;
@@ -285,12 +309,13 @@ function refactorOperationsToBeFaceted(node){
 function forEachIn(node, functor){
     functor(node);
     for (var property in node) {
-        switch(property){
-            // The following reference(s), if followed, may turn the AST into a circular graph, and must be ignored
-            case 'outgoingFlows':
-                continue;
-        }
-        //noinspection JSUnfilteredForInLoop
+        // The following reference(s), if followed, may turn the AST into a circular graph, and must be ignored
+        if (property === 'outgoingFlows')
+            continue;
+
+        /**
+         * @type {*|ASTNode|Array<ASTNode>}
+         */
         var value = node[property];
         if (isAnASTNode(value))
             forEachIn(value, functor);
@@ -305,19 +330,25 @@ function forEachIn(node, functor){
 
 /**
  *
- * @param {*} value
+ * @param {*|ASTNode} value
  * @returns {boolean}
  */
 function isAnASTNode(value){
+    /**
+     * @typedef {string} value.__proto__.constructor.name
+     */
     return value !== null && typeof value === 'object' && value.__proto__.constructor.name === 'Node';
 }
 
 /**
  *
- * @param {*} value
+ * @param {*|Array<*>} value
  * @returns {boolean}
  */
 function isArray(value) {
+    /**
+     * @typedef {function} Object.prototype.toString.call
+     */
     return typeof value === 'object' && Object.prototype.toString.call(value) === '[object Array]';
 }
 
@@ -344,9 +375,36 @@ function replaceLeftNodeWithRight(left, right) {
  * @param {Function} functor
  */
 function performProcessingPhase(container, functor){
+    /**
+     * @type {Array<ASTNode>}
+     */
     var iterationTarget = isArray(container) ? container : container.body.node;
     iterationTarget.forEach(function (node) {
         forEachIn(node, functor);
     });
+}
+
+function leftSetContainsRightSet(leftSet, rightSet){
+    if (leftSet instanceof Array)
+        return leftSet.filter(function(val) { return rightSet.indexOf(val) !== -1;}).length === rightSet.length;
+    return leftSet === rightSet;
+}
+
+/**
+ * @param {Array<Array>} listOfSets
+ * @returns {Array}
+ */
+function mergeSets(listOfSets){
+    var mergedSet = {};
+    var uniqueMergedSet = [];
+    listOfSets.forEach(function addAllIn(set){
+        set.forEach(function add(element){
+            mergedSet[element] = element;
+        })
+    })
+    for (var i in mergedSet)
+        if (mergedSet.hasOwnProperty(i))
+            uniqueMergedSet.push(i);
+    return uniqueMergedSet;
 }
 
