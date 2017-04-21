@@ -217,14 +217,21 @@ function overlayInformationFlows(node){
  */
 function markFaceting(node){
    if (node.faceting) {
-       node.outgoingFlows.forEach(propagate, [node.faceting]);
+       node.outgoingFlows.forEach(function(outflowNode){
+           propagate(outflowNode, node.faceting);
+       });
    }
+    /**
+     * @param {ASTNode} node
+     * @param {Array<string>} faceting
+     */
    function propagate(node, faceting){
        if (node.faceting && leftSetContainsRightSet(node.faceting, faceting))
            return; //avoid cycles
        node.faceting = mergeSets([node.faceting, faceting]);
-       node.faceting = faceting.slice().push;
-       node.outgoingFlows.forEach(propagate);
+       node.outgoingFlows.forEach(function(outflowNode){
+           propagate(outflowNode, node.faceting);
+       });
    }
 }
 
@@ -237,14 +244,19 @@ function refactorOperationsToBeFaceted(node){
         var newNode, object, operand, operandIsOnLeft;
         switch (node.type) {
             case 'AssignmentExpression':
-                var unfacetedAssignedValue = node.right;
-                var label; // TODO
-                var replacementString = 'new FacetedValue(' + label + ', placeholder, ' + unfacetedIdentifier + ')';
-                var newExpression = astq(replacementString).body.node[0].expression;
-                replaceLeftNodeWithRight(node, newExpression);
-                node.faceting = [label];
-                node.wasReconstructedForFVs = true;
-                debugger;
+                // with view v, `var a = b;` becomes `var a = <v ? b : a>`
+                var viewAsString = (node.faceting.length === 1) ? "'" + node.faceting[0] + "'" : "['" + node.faceting.join("', '") + "']";
+                var replacementString = 'new FacetedValue(' + viewAsString + ', bPlaceholder, aPlaceholder)';
+                newNode = astq(replacementString).body.node[0].expression;
+                newNode.arguments[1] = node.right; // private value b
+                newNode.arguments[2] = node.left; // public value a
+                newNode.faceting = node.faceting;
+                currentScope = node.scope;
+                forEachIn(newNode, overlayScoping);
+                forEachIn(newNode, prepForInformationFlows);
+                forEachIn(newNode, overlayInformationFlows);
+                forEachIn(newNode, markFaceting);
+                replaceLeftNodeWithRight(node, newNode); // TODO should be node.right instead of node... but then it stack-overflows?
                 break;
             case 'BinaryExpression':
                 if (node.left.type === 'Identifier' && node.left.faceting){
@@ -398,13 +410,13 @@ function mergeSets(listOfSets){
     var mergedSet = {};
     var uniqueMergedSet = [];
     listOfSets.forEach(function addAllIn(set){
-        set.forEach(function add(element){
+        set && set.forEach(function add(element){
             mergedSet[element] = element;
-        })
+        });
     })
     for (var i in mergedSet)
         if (mergedSet.hasOwnProperty(i))
-            uniqueMergedSet.push(i);
+            uniqueMergedSet.push(mergedSet[i]);
     return uniqueMergedSet;
 }
 
