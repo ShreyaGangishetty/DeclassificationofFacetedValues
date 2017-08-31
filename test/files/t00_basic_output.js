@@ -1,0 +1,1 @@
+var x = new FacetedValue('A', 42, 0);
