@@ -366,7 +366,6 @@ function isArray(value) {
 
 /**
  * A bit of a hack. This is intended to entirely replace one node with another.
- * TODO: Check with Dr. Austin, am I missing something on this?
  * @example '<a ? b : c>' node of type 'Literal' becomes a node of type 'ExpressionStatement' that corresponds to
  *      `new FacetedValue(a, b, c)`.
  * @param left

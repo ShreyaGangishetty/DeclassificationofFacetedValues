@@ -47,7 +47,7 @@ function Cloak(associatedView, value) {
     function getVal(attribute){
         if (isSymbolForConversionToPrimitive(attribute))
             return toPrimitive;
-        if (typeof attribute == 'string' && attribute.charAt(0) == '$'){
+        if (typeof attribute === 'string' && attribute.charAt(0) === '$'){
             var extractedAttr = attribute.slice(1);
             if (dataIsNotExposedBy(extractedAttr))
                 return facetedValue[extractedAttr];
@@ -61,10 +61,10 @@ function Cloak(associatedView, value) {
      * @returns {boolean}
      */
     function isSymbolForConversionToPrimitive(val) {
-        if ((typeof val == 'symbol') && (val.valueOf().toString() == 'Symbol(Symbol.toPrimitive)'))
+        if ((typeof val === 'symbol') && (val.valueOf().toString() === 'Symbol(Symbol.toPrimitive)'))
             return true;
         // On console.log:
-        return val == 'inspect';
+        return val === 'inspect';
     }
 
     /**

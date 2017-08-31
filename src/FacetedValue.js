@@ -158,7 +158,11 @@ FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) 
 };
 
 /**
- * TODO: Write description
+ * The labels of a faceted value describe the classification of the data in its various facets.
+ * A view is a list of strings that describe the authorizations of an observer.
+ * This function is used to match such a view against the faceted value.
+ * Each label is checked for its presence within the view, to see whether the observer is authorized for that
+ * classification of data, and an appropriate facet returned.
  *
  * @param {Array<String>} view
  * @returns {*}
@@ -295,7 +299,9 @@ FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
 /* ******************************* "Static" members ***************************************************/
 
 /**
- * TODO: description
+ * A rough regular expression for matching faceted values, e.g. <A ? b : c>
+ * Assumes that the string contains nothing but the faceted value.
+ *
  * @type {RegExp}
  */
 FacetedValue.REGEX = /^<(.+) \? (.+) : (.+)>$/;
@@ -364,7 +370,7 @@ FacetedValue.invokeFunction = function invokeFunction(lambda, thisArg, argArray)
  */
 FacetedValue.getFacetedListOfValuesFrom = function getFacetedListOfValuesFrom(listOfFacetedValues){
     var indexOfFirstFacVal = findFirstFacetedValueIn(listOfFacetedValues);
-    var leadingNonFacetedValues = listOfFacetedValues.slice(0, indexOfFirstFacVal); // TODO end excluded?
+    var leadingNonFacetedValues = listOfFacetedValues.slice(0, indexOfFirstFacVal);
     var facetedList = listOfFacetedValues[indexOfFirstFacVal].toFacetedArray();
     var followingArgs = listOfFacetedValues.slice(indexOfFirstFacVal + 1);
     facetedList.binaryOps(':', leadingNonFacetedValues, true);
@@ -379,7 +385,7 @@ FacetedValue.getFacetedListOfValuesFrom = function getFacetedListOfValuesFrom(li
  * @param {Function} e_fals
  */
 FacetedValue.evaluateConditional = function evaluateConditional(facetedBoolean, e_true, e_fals){
-    // TODO
+
 };
 
 /**
@@ -471,8 +477,10 @@ function binaryOperationOfPrimitives(operand1, operator, operand2, operand2isOnL
         case '<'          : return (operand2isOnLeft) ?  operand2 <          operand1 : operand1 <          operand2;
         case '<='         : return (operand2isOnLeft) ?  operand2 <=         operand1 : operand1 <=         operand2;
         case '>='         : return (operand2isOnLeft) ?  operand2 >=         operand1 : operand1 >=         operand2;
-        case '=='         : return (operand2isOnLeft) ?  operand2 ==         operand1 : operand1 ==         operand2;
-        case '!='         : return (operand2isOnLeft) ?  operand2 !=         operand1 : operand1 !=         operand2;
+        case '=='         : //noinspection EqualityComparisonWithCoercionJS
+                            return (operand2isOnLeft) ?  operand2 ==         operand1 : operand1 ==         operand2;
+        case '!='         : //noinspection EqualityComparisonWithCoercionJS
+                            return (operand2isOnLeft) ?  operand2 !=         operand1 : operand1 !=         operand2;
         case '&&'         : return (operand2isOnLeft) ?  operand2 &&         operand1 : operand1 &&         operand2;
         case '||'         : return (operand2isOnLeft) ?  operand2 ||         operand1 : operand1 ||         operand2;
         case '!=='        : return (operand2isOnLeft) ?  operand2 !==        operand1 : operand1 !==        operand2;
