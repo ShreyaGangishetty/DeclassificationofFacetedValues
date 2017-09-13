@@ -1,4 +1,4 @@
-var Sweet = require('../../../lib/sweet.js');
+var Sweet = require('../../lib/sweet.js');
 var fs = require('fs');
 
 /*
