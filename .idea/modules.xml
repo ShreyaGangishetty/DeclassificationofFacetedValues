@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/thesis.iml" filepath="$PROJECT_DIR$/thesis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FacetedValuesJS.iml" filepath="$PROJECT_DIR$/FacetedValuesJS.iml" />
     </modules>
   </component>
 </project>

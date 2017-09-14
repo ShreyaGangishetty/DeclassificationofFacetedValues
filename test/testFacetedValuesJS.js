@@ -11,8 +11,7 @@ exports.testFacetedValuesJS = {};
      */
     exports.testFacetedValuesJS[testName] = function(test){
         test.expect(1);
-        console.log(__dirname);
-        var prefix = __dirname + '/files/' + testName;
+        var prefix = './test_files/' + testName;
         var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
         var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
         test.equal(actualOutput, expectedOutput);
