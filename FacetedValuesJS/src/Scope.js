@@ -1,3 +1,5 @@
+module.exports = Scope;
+
 /**
  * Please note that this constructor has a side effect. The parent will be updated to have this constructed
  * Scope as one of its children.
@@ -103,5 +105,3 @@ Scope.prototype.viewSimplifiedVersion = function viewSimplifiedVersion(){
         children: this._children.map(function(c){return c.viewSimplifiedVersion();})
     };
 }
-
-exports.bin = Scope;

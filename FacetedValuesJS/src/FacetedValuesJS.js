@@ -11,9 +11,9 @@
  */
 var fs = require('fs');
 var astq = require("ast-query");
-var FacetedValue = require('./FacetedValue.js').bin;
-var Cloak = require('./Cloak.js').bin;
-var Scope = require('./Scope.js').bin;
+var FacetedValue = require('./FacetedValue.js');
+var Cloak = require('./Cloak.js');
+var Scope = require('./Scope.js');
 
 /**
  * This function exists because we do not yet have an NPM package.
@@ -27,7 +27,7 @@ var Scope = require('./Scope.js').bin;
  * @param pathToLibrary
  * @returns {{FacetedValue: FacetedValue, Cloak: Cloak, fromString: fromString, fromFile: fromFile}}
  */
-exports.bin = function(pathToLibrary) {
+module.exports = function(pathToLibrary) {
     return {
         FacetedValue: FacetedValue,
         Cloak: Cloak,

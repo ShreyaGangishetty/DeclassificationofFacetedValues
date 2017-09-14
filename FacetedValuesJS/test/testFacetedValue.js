@@ -1,5 +1,5 @@
 process.env.NODE_ENV = 'test';
-var FacetedValue = require('../src/FacetedValue.js').bin;
+var FacetedValue = require('../src/FacetedValue.js');
 
 exports.testFacetedValue = {
 

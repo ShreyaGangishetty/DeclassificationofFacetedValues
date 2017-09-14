@@ -1,5 +1,5 @@
-exports.bin = Cloak;
-var FacetedValue = require('./FacetedValue.js').bin;
+module.exports = Cloak;
+var FacetedValue = require('./FacetedValue.js');
 
 /**
  *

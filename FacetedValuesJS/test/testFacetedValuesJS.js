@@ -1,6 +1,6 @@
 process.env.NODE_ENV = 'test';
 var pathToFVLib = '../src/FacetedValuesJS.js';
-var FacetedValuesJS = (require(pathToFVLib).bin)(pathToFVLib);
+var FacetedValuesJS = (require(pathToFVLib))(pathToFVLib);
 var fs = require('fs');
 
 exports.testFacetedValuesJS = {};
