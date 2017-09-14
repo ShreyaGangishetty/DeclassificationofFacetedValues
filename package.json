@@ -1,7 +1,7 @@
 {
   "name": "FacetedValuesJS",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "description": "Library for information flow security",
   "author": "akalenda <akalenda@users.noreply.github.com> (https://github.com/akalenda)",
   "dependencies": {
