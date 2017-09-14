@@ -27,8 +27,8 @@ var Scope = require('./Scope.js');
  * @param pathToLibrary
  * @returns {{FacetedValue: FacetedValue, Cloak: Cloak, fromString: fromString, fromFile: fromFile}}
  */
-module.exports = function(pathToLibrary) {
-    return {
+if (typeof module !== 'undefined') {
+    module.exports = {
         FacetedValue: FacetedValue,
         Cloak: Cloak,
         fromString: function fromString(str) {
@@ -38,7 +38,7 @@ module.exports = function(pathToLibrary) {
             var inputfile = fs.readFileSync(path);
             return new Builder(inputfile).presentOutputs();
         }
-    };
+    }
 }
 
 function Builder(inputProgram) {

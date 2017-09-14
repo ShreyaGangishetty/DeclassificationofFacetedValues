@@ -1,4 +1,6 @@
-module.exports = Cloak;
+if (typeof module !== 'undefined') {
+    module.exports = Cloak;
+}
 var FacetedValue = require('./FacetedValue.js');
 
 /**

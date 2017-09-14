@@ -1,4 +1,6 @@
-module.exports = FacetedValue; // TODO: Figure out how to get rid of this .bin !
+if (typeof module !== 'undefined') {
+    module.exports = FacetedValue;
+}
 //noinspection JSUnresolvedVariable,JSUnusedGlobalSymbols
 Symbol = Symbol || function noop(){};
 
