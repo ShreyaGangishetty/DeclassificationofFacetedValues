@@ -54,7 +54,7 @@ exports.testcloak = {
      * @param {NodeUnit} test
      */
     method_unaryOp: function method_unaryOps(test){
-        var view = [];
+        var view = ['A'];
         var x = cloak(view, 77);
         x.$unaryOps('--');
         test.equal(x, 76);
@@ -67,27 +67,26 @@ exports.testcloak = {
      * @param {NodeUnit} test
      */
     method_apply: function method_apply(test){
-        var a = 55;
-        var view = [];
-        var x = cloak(new FacetedValue("A",
-            function(n){ return a + n; },
-            function(n){ return a - n; }
-        ), view);
-        var x2 = x.$apply(this, [11]);
-        test.equal(x2, 57);
-        view.push("A");
-        test.equal(x2, 53);
+        test.expect(2);
+        var view = ['A'];
+        var a = cloak(view, function(x, y){ return x + y; });
+        var b = a.$apply(this, [3, 5]);
+        test.equal(b, 8);
+        view.pop();
+        test.notEqual(b, 8);
+        test.done();
     },
 
     /**
      * @param {NodeUnit} test
      */
     methodsInaccessible: function methodsInaccessible(test){
+        test.expect(7);
         var fv = new FacetedValue("A", 1, 2);
         var fv2 = new FacetedValue("A", function(){}, function(){});
         var v = [];
-        var x = cloak(fv, v);
-        var x2 = cloak(fv2, v);
+        var x = cloak(v, fv);
+        var x2 = cloak(v, fv2);
         test.throws(function(){x.binaryOps('+', 1);});
         test.throws(function(){x.unaryOps('++');});
         test.throws(function(){x.getFacetVisibleVersus([]);});
@@ -102,7 +101,8 @@ exports.testcloak = {
      * @param {NodeUnit} test
      */
     dataInaccessible: function dataInaccessible(test){
-        var x = cloak(new FacetedValue("A", 1, 2), []);
+        test.expect(2);
+        var x = cloak([], new FacetedValue("A", 1, 2));
         test.equal(x.leftValue, undefined);
         test.equal(x.rightValue, undefined);
         test.done();
@@ -113,7 +113,7 @@ exports.testcloak = {
      */
     productsAlsoCloaked: function productsAlsoCloaked(test){
         test.expect(4);
-        var x = cloak(new FacetedValue("A", 1, 2), []);
+        var x = cloak([], new FacetedValue("A", 1, 2));
         var y = x.$binaryOps('+', 5);
         test.equal(typeof x, 'object');
         test.equal(typeof y, 'object');
