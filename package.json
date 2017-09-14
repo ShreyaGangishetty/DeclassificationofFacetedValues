@@ -1,6 +1,7 @@
 {
   "name": "FacetedValuesJS",
   "version": "0.0.0",
+  "license": "MIT",
   "private": false,
   "description": "Library for information flow security",
   "author": "akalenda <akalenda@users.noreply.github.com> (https://github.com/akalenda)",
@@ -10,5 +11,10 @@
   "devDependencies": {
     "nodeunit": "^0.11.1"
   },
-  "main": "FacetedValuesJS.js"
+  "main": "FacetedValuesJS.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/akalenda/FacetedValuesJS.git"
+  },
+  "bugs": "https://github.com/akalenda/FacetedValuesJS.git"
 }
