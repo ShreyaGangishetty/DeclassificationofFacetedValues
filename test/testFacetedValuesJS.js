@@ -11,10 +11,16 @@ exports.testFacetedValuesJS = {};
      */
     exports.testFacetedValuesJS[testName] = function(test){
         test.expect(1);
-        var prefix = './test_files/' + testName;
-        var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
-        var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
-        test.equal(actualOutput, expectedOutput);
+        function readWrite(prefix){
+            var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
+            var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
+            test.equal(actualOutput, expectedOutput);
+        }
+        try {
+            readWrite('./test_files/' + testName);
+        } catch(ignored){
+            readWrite('../test_files/' + testName);
+        }
         test.done();
     };
 });

@@ -18,65 +18,36 @@ operating system (Linux, Windows, OS X) will work.
 Make sure [NodeJS](https://nodejs.org/) 
 and [NPM](https://github.com/npm/npm) are installed:
 
-    $ nodejs -v
-    v4.2.6
-     
-    $ npm -v
-    3.5.2
+![](./gettingStarted_nodejs.png)
 
-Our module currently depends on the NPM module
-[AST-Query](https://github.com/SBoudrias/AST-query):
+Use NPM to install our `faceted-values-js` module. You can install it locally
+to a specific package you are working on by including a 
+[package.json](https://docs.npmjs.com/files/package.json) in your workspace, or
+you can install it globally. The following screenshot demonstrates a global
+install on Ubuntu Linux:
 
-    $ npm install ast-query
-     
-    $ npm ls ast-query
-    ast-query@2.0.0
+![](./gettingStarted_InstallPackage.png)
     
 Although not strictly necessary for an end-user, the NPM module
 [nodeunit](https://github.com/caolan/nodeunit)
-is recommended so as to run our unit tests:
+may be useful. Our unit tests show the library in action, and running them
+oneself can help with troubleshooting. As noted in the documentation, installing
+nodeunit globally allows it to be used from the command line. The NPM module does
+not include these unit test files, but they can be found in the repository:
 
-    $ npm install nodeunit
-     
-    $ npm ls nodeunit
-    nodeunit@0.11.1
-    
-[FacetedValuesJS](https://github.com/akalenda/FacetedValuesJS.git) 
-is not yet an NPM module. Pull it from the repository to the
-directory of your choice, i.e.:
-
-    $ mkdir ~/workspace
-    $ cd $!
-    $ git clone https://github.com/akalenda/FacetedValuesJS.git
+![](./gettingStarted_nodeunit.png)
     
 ### Using the library
 
-The unit tests, in putting the library through its paces, include
-many examples of how it may be used. Here we demonstrate creating
-a new program from scratch and having FacetedValuesJS process it,
-using the most basic unit test as an example:
+Here is a screenshot of a simple usage performed through the NodeJS REPL:
 
-    $ nodejs
-    > var fvjs = require('~/workspace/FacetedValuesJS/src/FacetedValuesJS.js');
-    > var inputProgram = 'var x = "<A ? 1 : 2>";
-    > var expectedOutputProgram = "var x = new FacetedValue('A', 1, 2);"
-    > var actualOutputProgram = fvjs.fromString(inputProgram).process().toString();
-    > console.log(actualOutputProgram)
-    var x = new FacetedValue('A', 1, 2);
-    undefined
-    > actualOutputProgram == expectedOutputProgram
-    true
-    > .exit
+![](./gettingStarted_REPL.png)
     
-Typically however the input program would instead be read from and 
-written to files:
+However, this is not a practical way to use faceted values. Typically one would write
+a complete program to a `.js` file, and then have our API rewrite the program to a new
+source file that is then used:
 
-    $ nodejs
-    > var fvjs = require('~/workspace/FacetedValuesJS/src/FacetedValuesJS.js');
-    > fvjs.fromFile('~/workspace/FacetedValuesJS/test/t0_basic_input.js').toFile('~/workspace/t0_basic_output.js');
-    > .exit
-    $ cat ~/workspace/t0_basic_output.js
-    var x = new FacetedValue('A', 1, 2);
+![](./gettingStarted_fileIO.png)
     
 ## API Overview
 
