@@ -80,4 +80,16 @@ written to files:
     
 ## API Overview
 
+## Development
 
+### Versioning
+
+[Semantic versioning](http://semver.org/) has much to be studied, but 
+at the moment the repository follows this basic outline 
+[courtesy of Evan Hahn](https://evanhahn.com/make-an-npm-baby/):
+
+- There are three positive integers, A.B.C. 
+- Increment C when you fix bugs. 
+- Increment B when you add features but don't break old code. 
+- Increment A when you'll break old code. 
+- When A is 0, there are no rules.

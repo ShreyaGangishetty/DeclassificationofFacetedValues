@@ -1,6 +1,7 @@
 process.env.NODE_ENV = 'test';
-var Cloak = require('../src/Cloak.js');
-var FacetedValue = require('../src/FacetedValue.js');
+var FacetedValuesJS = require('../src/FacetedValuesJS');
+var FacetedValue = FacetedValuesJS.FacetedValue;
+var Cloak = FacetedValuesJS.Cloak;
 
 exports.testcloak = {
 

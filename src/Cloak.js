@@ -10,6 +10,7 @@ var FacetedValue = require('./FacetedValue.js');
  * @property {Function} $binaryOps - {@link FacetedValue#binaryOps}
  * @property {Function} $unaryOps - {@link FacetedValue#unaryOps}
  * @property {Function} $apply - {@link FacetedValue#apply}
+ * @constructor
  */
 function Cloak(associatedView, value) {
 
