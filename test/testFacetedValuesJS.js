@@ -4,7 +4,12 @@ var fs = require('fs');
 
 exports.testFacetedValuesJS = {};
 [
-    't00_basic'
+    't00_basic',
+    't01_snippet1.6.4',
+    't02_snippet3.3.1.1',
+    't03_snippet3.4.3.1',
+    't04_snippet4.1.1',
+    't05_snippet4.1.3'
 ].forEach(function testBattery(testName){
     /**
      * @param {NodeUnit} test
