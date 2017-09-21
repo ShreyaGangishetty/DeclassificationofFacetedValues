@@ -1,6 +1,5 @@
-if (typeof module !== 'undefined') {
+if (typeof module !== 'undefined')
     module.exports = FacetedValue;
-}
 //noinspection JSUnresolvedVariable,JSUnusedGlobalSymbols
 Symbol = Symbol || function noop(){};
 

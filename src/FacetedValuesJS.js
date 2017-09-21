@@ -1,8 +1,3 @@
-/*
-
- */
-
-/* ****************** IMPORT ****************************************************************/
 /**
  * fs is an imported library with various file system functions
  * @type {Object}
@@ -15,18 +10,6 @@ var FacetedValue = require('./FacetedValue.js');
 var Cloak = require('./Cloak.js');
 var Scope = require('./Scope.js');
 
-/**
- * This function exists because we do not yet have an NPM package.
- *
- * The idea is that when we rewrite the program to include faceted values, there
- * needs to be a `var FacetedValuesJS = require('FacetedValuesJS.js')` line at the beginning
- * so that it can reach our API.
- *
- * However,
- *
- * @param pathToLibrary
- * @returns {{FacetedValue: FacetedValue, Cloak: Cloak, fromString: fromString, fromFile: fromFile}}
- */
 if (typeof module !== 'undefined') {
     module.exports = {
         FacetedValue: FacetedValue,
@@ -68,17 +51,17 @@ Builder.prototype.presentOutputs = function presentOutputs(){
             return that.toFile(path);
         }
     };
-}
+};
 
 Builder.prototype.toString = function toString(){
     return this.tree.toString();
-}
+};
 
 Builder.prototype.toFile = function toFile(path){
     var s = this.toString();
     fs.writeFileSync(path, s);
     return s;
-}
+};
 
 /* ************************* CORE FUNCTIONS *******************************************/
 
@@ -159,7 +142,7 @@ Builder.prototype.overlayScoping = function overlayScoping(node){
     else if (node.type === 'VariableDeclarator'){
         this.currentScope.registerSymbol(node.id.name, node);
     }
-}
+};
 
 /**
  * This pass simply puts empty lists in each node so that, in the next pass, we don't have to constantly check to see
@@ -350,7 +333,7 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
                 break;
         }
     }
-}
+};
 
 /* **************************** HELPERS *********************************************/
 
@@ -380,7 +363,7 @@ Builder.prototype.forEachIn = function forEachIn(node, functor){
             }.bind(this));
         }
     }
-}
+};
 
 /**
  *
@@ -435,7 +418,7 @@ Builder.prototype.performProcessingPhase = function performProcessingPhase(conta
     iterationTarget.forEach(function (node) {
         this.forEachIn(node, functor);
     }.bind(this));
-}
+};
 
 function leftSetContainsRightSet(leftSet, rightSet){
     if (leftSet instanceof Array)
@@ -454,7 +437,7 @@ function mergeSets(listOfSets){
         set && set.forEach(function add(element){
             mergedSet[element] = element;
         });
-    })
+    });
     for (var i in mergedSet)
         if (mergedSet.hasOwnProperty(i))
             uniqueMergedSet.push(mergedSet[i]);

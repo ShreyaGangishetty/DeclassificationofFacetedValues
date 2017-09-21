@@ -1,4 +1,5 @@
-module.exports = Scope;
+if (typeof module !== 'undefined')
+    module.exports = Scope;
 
 /**
  * Please note that this constructor has a side effect. The parent will be updated to have this constructed
@@ -45,7 +46,7 @@ function Scope(owner, parent){
  */
 Scope.prototype.getOwningFunction = function getOwningFunction(){
     return this._owner;
-}
+};
 
 /**
  * @param {string} identifier
@@ -58,7 +59,7 @@ Scope.prototype.getNodeNamed = function getFunctionNamed(identifier){
     if (this.parent)
         return this.parent.getNodeNamed(identifier);
     return undefined;
-}
+};
 
 /**
  * Adds the symbol to the dictionary of symbols (i.e. functions and variables) visible within this scope
@@ -70,7 +71,7 @@ Scope.prototype.registerSymbol = function registerSymbol(name, node){
     var alreadyRegistered = !!this._symbols[name];
     this._symbols[name] = node;
     return alreadyRegistered;
-}
+};
 
 /**
  * @callback ScopeFunctor
@@ -86,14 +87,14 @@ Scope.prototype.forEach = function forEach(functor){
     this._children.forEach(function(childScope){
         childScope.forEach(functor);
     });
-}
+};
 
 /**
  * @return {string} JSON.stringify'd rendition of {@link Scope#viewSimplifiedVersion}
  */
 Scope.prototype.toString = function toString(){
     return JSON.stringify(this.viewSimplifiedVersion(), null, 3);
-}
+};
 
 /**
  * @returns {{symbols: string, children: Array}} -- a simplified object simply containing the names of the symbols
@@ -104,4 +105,4 @@ Scope.prototype.viewSimplifiedVersion = function viewSimplifiedVersion(){
         symbols: Object.keys(this._symbols).join(),
         children: this._children.map(function(c){return c.viewSimplifiedVersion();})
     };
-}
+};
