@@ -381,13 +381,13 @@ FacetedValue.getFacetedListOfValuesFrom = function getFacetedListOfValuesFrom(li
 };
 
 /**
- *
- * @param {FacetedValue<Boolean>} facetedBoolean
+ * @param {FacetedValue<Boolean>|Boolean} facetedBoolean
  * @param {Function} e_true
  * @param {Function} e_fals
+ * @param {Object} thisArg
  */
-FacetedValue.evaluateConditional = function evaluateConditional(facetedBoolean, e_true, e_fals){
-
+FacetedValue.evaluateConditional = function evaluateConditional(facetedBoolean, e_true, e_fals, thisArg) {
+    evaluateConditional_helper(facetedBoolean, e_true, e_fals, thisArg, []);
 };
 
 /**
@@ -582,4 +582,24 @@ function findFirstFacetedValueIn(list){
         if (list[i] instanceof FacetedValue)
             return i;
     return NaN;
+}
+
+/**
+ * @param {FacetedValue<Boolean>|Boolean} facetedBoolean
+ * @param {Function} e_true
+ * @param {Function} e_fals
+ * @param {Object} thisArg
+ * @param {Array} view
+ */
+function evaluateConditional_helper(facetedBoolean, e_true, e_fals, thisArg, view){
+    if (facetedBoolean instanceof FacetedValue){
+        return new FacetedValue(view,
+            evaluateConditional_helper(facetedBoolean.leftValue, e_true, e_fals, thisArg, view),
+            evaluateConditional_helper(facetedBoolean.rightValue, e_true, e_fals, thisArg, view)
+        );
+    }
+    if (facetedBoolean)
+        return e_true(view);
+    else
+        return e_fals(view);
 }
