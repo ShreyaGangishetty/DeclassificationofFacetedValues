@@ -1,5 +1,7 @@
 var FacetedValuesJS = require('faceted-values-js');
 var FacetedValue = FacetedValuesJS.FacetedValue;
+var Cloak = FacetedValuesJS.Cloak;
+var view = [];
 // described step-by-step in TOPLAS
 function f(sec){
     var x = true;

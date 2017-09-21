@@ -54,7 +54,11 @@ Builder.prototype.presentOutputs = function presentOutputs(){
 };
 
 Builder.prototype.toString = function toString(){
-    return this.tree.toString();
+    return "var FacetedValuesJS = require('faceted-values-js');\n"
+        + "var FacetedValue = FacetedValuesJS.FacetedValue;\n"
+        + "var Cloak = FacetedValuesJS.Cloak;\n"
+        + "var view = [];\n"
+        + this.tree.toString();
 };
 
 Builder.prototype.toFile = function toFile(path){
