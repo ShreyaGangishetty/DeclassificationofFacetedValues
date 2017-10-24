@@ -320,6 +320,9 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
             case 'FunctionExpression':
                 debugger;
                 break;
+            case 'IfStatement':
+                debugger;
+                break;
             case 'Literal':
                 debugger;
                 break;
