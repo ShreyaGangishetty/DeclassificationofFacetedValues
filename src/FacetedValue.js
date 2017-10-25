@@ -305,7 +305,7 @@ FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
  *
  * @type {RegExp}
  */
-FacetedValue.REGEX = /^<(.+) \? (.+) : (.+)>$/;
+FacetedValue.REGEX = /^<\s*(.+)\s*\?\s*(.+)\s*:\s*(.+)\s*>$/;
 
 /**
  * When one or more FacetedValues are to be given as arguments to a function that is not itself FacetedValues-aware,

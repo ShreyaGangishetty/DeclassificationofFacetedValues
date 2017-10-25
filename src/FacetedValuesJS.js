@@ -105,7 +105,7 @@ function substituteFacetedValues(node){
     if (node.type === 'Literal') {
         if (typeof node.value === 'string') {
             try {
-                var m = node.value.match(FacetedValue.REGEX);
+                var m = node.value.match(FacetedValue.REGEX).map(function(str){return str.trim();});
                 var replacementString = "new FacetedValue('" + m[1] + "', " + m[2] + ", " + m[3] + ")";
                 // We use the above string to construct a miniature AST with which we may replace the string literal.
                 // Note that in the following, body.node[0] is an ExpressionStatement.
@@ -309,7 +309,6 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
                 this.forEachIn(newNode, overlayInformationFlows);
                 this.forEachIn(newNode, markFaceting);
                 replaceLeftNodeWithRight(node, newNode);
-                debugger;
                 break;
             case 'CallExpression':
                 debugger;
