@@ -198,30 +198,10 @@ function overlayInformationFlows(node){
             node.callee.outgoingFlows.push(node);
             if (node.callee.type === 'Identifier') {
                 var callDec = node.callee.scope.getNodeDeclaring(node.callee.name);
-                if (callDec) {
-                    switch (callDec.type){
-                        case 'FunctionDeclaration':
-                            for (var i = 0; i < node.arguments.length; i++)
-                                if (callDec.params[i])
-                                    node.arguments[i].outgoingFlows.push(callDec.params[i]);
-                            break;
-                        case 'VariableDeclarator':
-                            var replacementString = callDec.id.name + '.apply(this, [null]);';
-                            var miniTree = astq(replacementString);
-                            var newExpression = miniTree.body.node[0].expression;
-                            newExpression.arguments[1].elements = node.arguments;
-                            newExpression.outgoingFlows = node.outgoingFlows;
-                            replaceLeftNodeWithRight(node, newExpression);
-                            debugger;
-                            break;
-                        default:
-                            debugger;
-                            throw new Error("Unhandled type `" + callDec.type + "` in declaration of callee `" + callDec.name + "`.");
-                    }
-                } else {
-                    debugger;
-                    throw new Error("Unhandled type `" + node.callee.type + "` in reference to callee `" + node.callee.name + "`.");
-                }
+                if (callDec && callDec.type === 'FunctionDeclaration')
+                    for (var i = 0; i < node.arguments.length; i++)
+                        if (callDec.params[i])
+                            node.arguments[i].outgoingFlows.push(callDec.params[i]);
             } // TODO: It might be a MemberExpression instead of an Identifier
             break;
         case 'AssignmentExpression':
@@ -332,6 +312,15 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
                 break;
             case 'CallExpression':
                 debugger;
+                replacementString = node.callee.name + '.apply(this, [null]);';
+                newNode = astq(replacementString).body.node[0].expression;
+                newNode.arguments[1].elements = node.arguments;
+                this.currentScope = node.scope;
+                this.forEachIn(newNode, this.overlayScoping);
+                this.forEachIn(newNode, prepForInformationFlows);
+                this.forEachIn(newNode, overlayInformationFlows);
+                this.forEachIn(newNode, markFaceting);
+                replaceLeftNodeWithRight(node, newNode);
                 break;
             case 'FunctionDeclaration':
                 debugger;
