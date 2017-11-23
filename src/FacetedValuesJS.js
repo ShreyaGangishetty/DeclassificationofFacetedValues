@@ -189,6 +189,7 @@ function linkIdentifiers(node){
  * @param {ASTNode} node
  */
 function overlayInformationFlows(node){
+    var i;
     switch (node.type){
         case 'BinaryExpression':
             node.left.outgoingFlows.push(node);
@@ -196,13 +197,14 @@ function overlayInformationFlows(node){
             break;
         case 'CallExpression':
             node.callee.outgoingFlows.push(node);
-            if (node.callee.type === 'Identifier') {
+            for (i = 0; i < node.arguments.length; i++) {
+                if (!node.arguments[i].outgoingFlows)
+                    debugger;
+                node.arguments[i].outgoingFlows.push(node);
                 var callDec = node.callee.scope.getNodeDeclaring(node.callee.name);
-                if (callDec && callDec.type === 'FunctionDeclaration')
-                    for (var i = 0; i < node.arguments.length; i++)
-                        if (callDec.params[i])
-                            node.arguments[i].outgoingFlows.push(callDec.params[i]);
-            } // TODO: It might be a MemberExpression instead of an Identifier
+                if (callDec && callDec.type === 'FunctionDeclaration' && callDec.params[i])
+                    node.arguments[i].outgoingFlows.push(callDec.params[i]);
+            }
             break;
         case 'AssignmentExpression':
             node.right.outgoingFlows.push(node.left);
@@ -311,10 +313,16 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
                 replaceLeftNodeWithRight(node, newNode);
                 break;
             case 'CallExpression':
-                debugger;
-                replacementString = node.callee.name + '.apply(this, [null]);';
-                newNode = astq(replacementString).body.node[0].expression;
-                newNode.arguments[1].elements = node.arguments;
+                if (this.currentScope.getNodeDeclaring(node.callee.name)){
+                    replacementString = node.callee.name + '.apply(this, [null]);';
+                    newNode = astq(replacementString).body.node[0].expression;
+                    newNode.arguments[1].elements = node.arguments;
+                } else {
+                    replacementString = 'FacetedValue.invoke(null, this, []);';
+                    newNode = astq(replacementString).body.node[0].expression;
+                    newNode.arguments[0] = node.callee;
+                    newNode.arguments[2].elements = node.arguments;
+                }
                 this.currentScope = node.scope;
                 this.forEachIn(newNode, this.overlayScoping);
                 this.forEachIn(newNode, prepForInformationFlows);
