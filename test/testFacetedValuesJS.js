@@ -3,19 +3,35 @@ var FacetedValuesJS = require('../src/FacetedValuesJS');
 var fs = require('fs');
 
 exports.testFacetedValuesJS = {};
-[
-    't00_basic',
-    't01_snippet1.6.4',
-    't02_snippet3.3.1.1',
-    't03_snippet3.4.3.1',
-    't04_snippet4.1.1',
-    't05_snippet4.1.3'
-].forEach(function testBattery(testName){
+
+/*
+ * This program searches the test_files
+ * directory for files that end with _input.js and
+ * trims them to acquire test names. These are
+ * then used to create nodeunit tests.
+ *
+ * E.g. to create a new test called FOO, add FOO_input.js
+ * as a new file, and then FOO_output.js. This will result in a new
+ * nodeunit test that processes the input file using FacetedValuesJS
+ * and compares it to the output file.
+ */
+
+/**
+ * @type {Array.<String>}
+ */
+var testBattery = fs.readdirSync('../test_files/')
+    .map(function forInputFiles(filename){
+        return filename.substring(0, filename.indexOf("_input.js"));
+    }).filter(function removeEmpties(str){
+        return str.length;
+    });
+
+testBattery.forEach(function testBattery(testName){
     /**
      * @param {NodeUnit} test
      */
     exports.testFacetedValuesJS[testName] = function(test){
-        test.expect(1);
+        test.expect(testBattery.length);
         function readWrite(prefix){
             var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
             var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
