@@ -3,6 +3,7 @@ var FacetedValuesJS = require('../src/FacetedValuesJS');
 var FacetedValue = FacetedValuesJS.FacetedValue;
 var Cloak = FacetedValuesJS.Cloak;
 
+// noinspection JSUnusedGlobalSymbols
 exports.testcloak = {
 
     /**

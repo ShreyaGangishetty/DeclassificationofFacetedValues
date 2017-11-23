@@ -34,7 +34,12 @@ testBattery.forEach(function testBattery(testName){
         test.expect(testBattery.length);
         function readWrite(prefix){
             var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
+
             var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
+            test.equal(actualOutput, expectedOutput);
+
+            var fileAsString = fs.readFileSync(prefix + '_input.js');
+            actualOutput = FacetedValuesJS.fromString(fileAsString).toString();
             test.equal(actualOutput, expectedOutput);
         }
         try {
@@ -58,7 +63,7 @@ exports.testFacetedValuesJS.testImport_Cloak = function testImport_Cloak(test){
     view.pop();
     test.notEqual(x, 11);
     test.done();
-}
+};
 
 /**
  * @param {NodeUnit} test
@@ -73,4 +78,4 @@ exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_Facete
     ).toString();
     test.equal(actual, expected);
     test.done();
-}
+};
