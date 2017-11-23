@@ -56,6 +56,7 @@ exports.testcloak = {
      * @param {NodeUnit} test
      */
     method_unaryOp: function method_unaryOps(test){
+        test.expect(2);
         var view = ['A'];
         var x = Cloak(view, 77);
         x.$unaryOps('--');

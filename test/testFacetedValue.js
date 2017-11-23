@@ -172,6 +172,7 @@ exports.testFacetedValue = {
      * @param {NodeUnit} test
      */
     invokeFunction : function testInvokeFunction(test){
+        test.expect(2);
         var facetedNumber = new FacetedValue("A", 25, 36);
         var facetedSqrt = FacetedValue.invokeFunction(Math.sqrt, this, [facetedNumber]);
         test.equal(facetedSqrt.toString(), '<A ? 5 : 6>');

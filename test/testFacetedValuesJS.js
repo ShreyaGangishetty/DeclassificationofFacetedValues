@@ -19,7 +19,7 @@ exports.testFacetedValuesJS = {};
 /**
  * @type {Array.<String>}
  */
-var testBattery = fs.readdirSync('../test_files/')
+var testBattery = fs.readdirSync('./test_files/')
     .map(function forInputFiles(filename){
         return filename.substring(0, filename.indexOf("_input.js"));
     }).filter(function removeEmpties(str){
@@ -31,22 +31,14 @@ testBattery.forEach(function testBattery(testName){
      * @param {NodeUnit} test
      */
     exports.testFacetedValuesJS[testName] = function(test){
-        test.expect(testBattery.length);
-        function readWrite(prefix){
-            var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
-
-            var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
-            test.equal(actualOutput, expectedOutput);
-
-            var fileAsString = fs.readFileSync(prefix + '_input.js');
-            actualOutput = FacetedValuesJS.fromString(fileAsString).toString();
-            test.equal(actualOutput, expectedOutput);
-        }
-        try {
-            readWrite('./test_files/' + testName);
-        } catch(ignored){
-            readWrite('../test_files/' + testName);
-        }
+        test.expect(testBattery.length * 2);
+        var prefix = './test_files/' + testName;
+        var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
+        var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
+        var fileAsString = fs.readFileSync(prefix + '_input.js');
+        test.equal(actualOutput, expectedOutput);
+        actualOutput = FacetedValuesJS.fromString(fileAsString).toString();
+        test.equal(actualOutput, expectedOutput);
         test.done();
     };
 });
