@@ -164,7 +164,7 @@ function prepForInformationFlows(node){
  * @param {ASTNode} node
  */
 function linkIdentifiers(node){
-    var declaringNode = node.scope.getNodeNamed(node.name);
+    var declaringNode = node.scope.getNodeDeclaring(node.name);
     if (declaringNode && declaringNode !== node) // this will be null if it is external to our program, i.e. built-in functions
         declaringNode.outgoingFlows.push(node);
 }
@@ -189,7 +189,6 @@ function linkIdentifiers(node){
  * @param {ASTNode} node
  */
 function overlayInformationFlows(node){
-    var i;
     switch (node.type){
         case 'BinaryExpression':
             node.left.outgoingFlows.push(node);
@@ -198,10 +197,31 @@ function overlayInformationFlows(node){
         case 'CallExpression':
             node.callee.outgoingFlows.push(node);
             if (node.callee.type === 'Identifier') {
-                var t = node.callee.scope.getNodeNamed(node.callee.name);
-                for (i = 0; i < node.arguments.length; i++)
-                    if (t.params[i])
-                        node.arguments[i].outgoingFlows.push(t.params[i]);
+                var callDec = node.callee.scope.getNodeDeclaring(node.callee.name);
+                if (callDec) {
+                    switch (callDec.type){
+                        case 'FunctionDeclaration':
+                            for (var i = 0; i < node.arguments.length; i++)
+                                if (callDec.params[i])
+                                    node.arguments[i].outgoingFlows.push(callDec.params[i]);
+                            break;
+                        case 'VariableDeclarator':
+                            var replacementString = callDec.id.name + '.apply(this, [null]);';
+                            var miniTree = astq(replacementString);
+                            var newExpression = miniTree.body.node[0].expression;
+                            newExpression.arguments[1].elements = node.arguments;
+                            newExpression.outgoingFlows = node.outgoingFlows;
+                            replaceLeftNodeWithRight(node, newExpression);
+                            debugger;
+                            break;
+                        default:
+                            debugger;
+                            throw new Error("Unhandled type `" + callDec.type + "` in declaration of callee `" + callDec.name + "`.");
+                    }
+                } else {
+                    debugger;
+                    throw new Error("Unhandled type `" + node.callee.type + "` in reference to callee `" + node.callee.name + "`.");
+                }
             } // TODO: It might be a MemberExpression instead of an Identifier
             break;
         case 'AssignmentExpression':

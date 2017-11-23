@@ -52,24 +52,24 @@ Scope.prototype.getOwningFunction = function getOwningFunction(){
  * @param {string} identifier
  * @returns {ASTNode}
  */
-Scope.prototype.getNodeNamed = function getFunctionNamed(identifier){
+Scope.prototype.getNodeDeclaring = function getNodeDeclaring(identifier){
     var node = this._symbols[identifier];
     if (!!node)
         return node;
     if (this.parent)
-        return this.parent.getNodeNamed(identifier);
+        return this.parent.getNodeDeclaring(identifier);
     return undefined;
 };
 
 /**
  * Adds the symbol to the dictionary of symbols (i.e. functions and variables) visible within this scope
- * @param {string} name
+ * @param {string} identifier
  * @param {ASTNode} node
- * @return {boolean} true if this scope already had a symbol with that name
+ * @return {boolean} true if this scope already had a symbol with that identifier
  */
-Scope.prototype.registerSymbol = function registerSymbol(name, node){
-    var alreadyRegistered = !!this._symbols[name];
-    this._symbols[name] = node;
+Scope.prototype.registerSymbol = function registerSymbol(identifier, node){
+    var alreadyRegistered = !!this._symbols[identifier];
+    this._symbols[identifier] = node;
     return alreadyRegistered;
 };
 
