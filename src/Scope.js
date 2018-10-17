@@ -67,8 +67,14 @@ Scope.prototype.getNodeDeclaring = function getNodeDeclaring(identifier){
  * @param {ASTNode} node
  * @return {boolean} true if this scope already had a symbol with that identifier
  */
+ 
+ //may be here label needs to be added to the execution scope or global scope
+
 Scope.prototype.registerSymbol = function registerSymbol(identifier, node){
-    var alreadyRegistered = !!this._symbols[identifier];
+    var temp=!this._symbols[identifier];
+    console.log("-----------------------symbol------------------"+temp);
+    var alreadyRegistered = !!this._symbols[identifier]; /// what is the meaning of double exclaimation
+    console.log("variable value:: "+alreadyRegistered+"-------identifier   "+identifier);
     this._symbols[identifier] = node;
     return alreadyRegistered;
 };

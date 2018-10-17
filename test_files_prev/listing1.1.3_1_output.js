@@ -9,4 +9,3 @@ view.push('k');
     Cloak.invokeFunction(doStuffWith, this, [hashedPw]);
 }
 view.pop();
-

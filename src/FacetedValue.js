@@ -1,7 +1,7 @@
-if (typeof module !== 'undefined')
+ if (typeof module !== 'undefined')
     module.exports = FacetedValue;
 //noinspection JSUnresolvedVariable,JSUnusedGlobalSymbols
-Symbol = Symbol || function noop(){};
+Symbol = Symbol || function noop(){}; // no operation?
 
 /**
  * A "faceted value" is an object which can contain an arbitrary number of facets. Each "facet" is a value corresponding
@@ -306,6 +306,7 @@ FacetedValue.prototype.toFacetedArray = function toFacetedArray(){
  * @type {RegExp}
  */
 FacetedValue.REGEX = /^<\s*(.+)\s*\?\s*(.+)\s*:\s*(.+)\s*>$/;
+//may be i can add some reex for new label functionality.....
 
 /**
  * When one or more FacetedValues are to be given as arguments to a function that is not itself FacetedValues-aware,
@@ -602,3 +603,39 @@ function evaluateConditional_helper(facetedBoolean, e_true, e_fals, thisArg, vie
     else
         return e_fals(view);
 }
+/**
+* @param {New Label}
+*/
+/*
+FacetedValue.prototype.newLabel = function newLabel(label){
+
+counter++;
+return counter+""; // global counter or something 
+
+}
+*/
+/*
+function mkDeclassifiable(secret,public){
+    let label = newLabel();
+    let mkSecret = function(secret,public){
+        return FacetedValue(label,secret,public);
+    }
+    let declassify = function(fv){
+        return defacet(label,fv);
+    }
+    return (mkSecret,declassify);
+}
+*/
+/*
+function defacet(label, fv) {
+    var result;
+    /// evaluate fv based on the label given fv has label1, gave label as input if both are equal show left value else show right value
+    if(label) {
+        result = fv.left;
+    }//label=== label1 left else right
+    else {
+        result = fv.right;
+    }
+    return result;
+}
+*/

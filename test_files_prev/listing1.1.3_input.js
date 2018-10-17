@@ -3,4 +3,3 @@ cloak k {
     var hashedPw = ThirdPartyLibrary.calculateHashFor(pw);
     doStuffWith(hashedPw);
 }
-

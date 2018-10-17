@@ -19,7 +19,7 @@ exports.testFacetedValuesJS = {};
 /**
  * @type {Array.<String>}
  */
-var testBattery = fs.readdirSync('./test_files/')
+var testBattery = fs.readdirSync("../test_files/")
     .map(function forInputFiles(filename){
         return filename.substring(0, filename.indexOf("_input.js"));
     }).filter(function removeEmpties(str){
@@ -32,13 +32,17 @@ testBattery.forEach(function testBattery(testName){
      */
     exports.testFacetedValuesJS[testName] = function(test){
         test.expect(testBattery.length * 2);
-        var prefix = './test_files/' + testName;
+        var prefix = '../test_files/' + testName;
         var expectedOutput = fs.readFileSync(prefix + '_output.js').toString();
-        var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
-        var fileAsString = fs.readFileSync(prefix + '_input.js');
+	console.log("expectedoutput  "+expectedOutput);
+        console.log("actual output about  to print.........................");
+	var actualOutput = FacetedValuesJS.fromFile(prefix + '_input.js').toString();
+        console.log("actualoutput from File"+actualOutput);
+	var fileAsString = fs.readFileSync(prefix + '_input.js');
         test.equal(actualOutput, expectedOutput);
         actualOutput = FacetedValuesJS.fromString(fileAsString).toString();
-        test.equal(actualOutput, expectedOutput);
+        console.log("actuallOutput fromString"+actualOutput);
+	test.equal(actualOutput, expectedOutput);
         test.done();
     };
 });
@@ -49,6 +53,7 @@ testBattery.forEach(function testBattery(testName){
 exports.testFacetedValuesJS.testImport_Cloak = function testImport_Cloak(test){
     test.expect(2);
     var Cloak = FacetedValuesJS.Cloak;
+    //console.log(Cloak+"0000000000000");
     var view = ['a'];
     var x = Cloak(view, 11);
     test.equal(x, 11);
@@ -61,13 +66,45 @@ exports.testFacetedValuesJS.testImport_Cloak = function testImport_Cloak(test){
  * @param {NodeUnit} test
  */
 exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_FacetedValue(test){
+    //console.log("printing test........."+test);
     test.expect(1);
     var FacetedValue = FacetedValuesJS.FacetedValue;
+   // console.log(FacetedValue+"0000000000000");
     var expected = '<A ? <B ? 1 : 3> : <B ? 5 : 7>>';
     var actual = new FacetedValue("A",
         new FacetedValue("B", 1, 3),
         new FacetedValue("B", 5, 7)
     ).toString();
     test.equal(actual, expected);
+    test.done();
+};
+
+/**
+ * @param {NodeUnit} test
+ */
+exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassify(test){
+    //console.log("printing test........."+test);
+    test.expect(3);
+    var FacetedValue = FacetedValuesJS.FacetedValue;
+    var Declassify = FacetedValuesJS.Declassify;
+    //console.log(Declassify+"0000000000000");
+    var dec = new Declassify();
+    var x = dec.createLabel();
+    console.log("printing the curretn label value :  "+x+"   :");
+    var y = dec.createLabel();
+    console.log("printing the curretn label value :  "+y+"   :");
+    test.equal(x, 1);
+    test.equal(y, 2);
+    var label=1;
+    var fvalue=new FacetedValue(1,"lol","not lol");
+    var defactedValue = dec.defacet(label,fvalue);
+    test.equal(defactedValue,"lol");
+    secret ="secret";
+    public ="public";
+    var result= dec.mkDeclassifiable(secret,public);
+    var mkSecret = result[0];
+    var declassification = result[1];   
+    console.log("------------mkSecret--------================"+mkSecret(secret,public)); 
+    console.log("-----------------declassification---================"+declassification(mkSecret));
     test.done();
 };

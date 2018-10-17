@@ -9,15 +9,18 @@ var astq = require("ast-query");
 var FacetedValue = require('./FacetedValue.js');
 var Cloak = require('./Cloak.js');
 var Scope = require('./Scope.js');
+var Declassify = require('./Declassify.js');
 
 if (typeof module !== 'undefined') {
     module.exports = {
         FacetedValue: FacetedValue,
         Cloak: Cloak,
+        Declassify: Declassify,
         fromString: function fromString(str) {
             return new Builder(str).presentOutputs();
         },
         fromFile: function fromFile(path) {
+            console.log("Inside faceted values JS");
             var inputfile = fs.readFileSync(path);
             return new Builder(inputfile).presentOutputs();
         }
@@ -29,8 +32,14 @@ function Builder(inputProgram) {
      * @type {Tree}
      * @property {Array<ASTNode>} body.node
      */
+    console.log("....................Inside builder(inputprogram function)");
     this.tree = astq(inputProgram);
+    //console.log("Tree------------------------------"+this.tree);// error
     this.currentScope = new Scope();
+    //console.log("scope variable printing"+this.currentScope);
+    this.counter= 0;
+    this.declassify = new Declassify();
+    console.log("Printing the counter value first:------test-----"+this.counter);
     this.performProcessingPhase(this.tree, checkNodeTypeCoverage);
     this.performProcessingPhase(this.tree, substituteFacetedValues);
     this.performProcessingPhase(this.tree, this.overlayScoping);
@@ -40,6 +49,9 @@ function Builder(inputProgram) {
     this.performProcessingPhase(this.tree, markFaceting);
     this.performProcessingPhase(this.tree, this.refactorOperationsToBeFaceted);
 }
+
+
+
 
 Builder.prototype.presentOutputs = function presentOutputs(){
     var that = this;
@@ -76,14 +88,19 @@ Builder.prototype.toFile = function toFile(path){
  */
 function checkNodeTypeCoverage(node){
     switch (node.type){
+    	
         case 'BinaryExpression':
         case 'CallExpression':
         case 'FunctionDeclaration':
+        // this prints as a function expression   here k = newlabel()
         case 'FunctionExpression':
         case 'Literal':
+        //k = newlabel() this is like assignment expression so need to make changes in this case
         case 'AssignmentExpression':
+        //if that expression contains newlabel() function then just create that function and have a global incrementor
         case 'BlockStatement':
         case 'ExpressionStatement':
+        case 'NewExpression':
         case 'Identifier':
         case 'IfStatement':
         case 'MemberExpression': // TODO Add to all cases as needed
@@ -91,6 +108,8 @@ function checkNodeTypeCoverage(node){
         case 'UnaryExpression':
         case 'VariableDeclaration':
         case 'VariableDeclarator':
+
+        console.log("node type--------------------"+node.type);
             break;
         default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
     }
@@ -133,6 +152,7 @@ Builder.prototype.overlayScoping = function overlayScoping(node){
         return; // a little sloppy in terms of program flow, but node.scope may have already been set by performProcessingPhase a few lines below, and we don't want it overridden
     node.scope = this.currentScope;
     if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression'){
+    	//here new label defacet declassify comes
         if (node.id) // Anonymous functions do not have an identifier
             this.currentScope.registerSymbol(node.id.name, node);
         this.currentScope = new Scope(node, this.currentScope);
@@ -144,6 +164,7 @@ Builder.prototype.overlayScoping = function overlayScoping(node){
         this.currentScope = this.currentScope.parent;
     }
     else if (node.type === 'VariableDeclarator'){
+    	// the variable for new label comes here
         this.currentScope.registerSymbol(node.id.name, node);
     }
 };
@@ -154,6 +175,7 @@ Builder.prototype.overlayScoping = function overlayScoping(node){
  *
  * @param {ASTNode} node
  */
+
 function prepForInformationFlows(node){
     node.outgoingFlows = [];
 }
@@ -163,6 +185,7 @@ function prepForInformationFlows(node){
  *
  * @param {ASTNode} node
  */
+
 function linkIdentifiers(node){
     var declaringNode = node.scope.getNodeDeclaring(node.name);
     if (declaringNode && declaringNode !== node) // this will be null if it is external to our program, i.e. built-in functions
@@ -359,7 +382,6 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
 };
 
 /* **************************** HELPERS *********************************************/
-
 /**
  * Recursively operates the functor upon the given AST node and all of its children.
  *
@@ -466,4 +488,3 @@ function mergeSets(listOfSets){
             uniqueMergedSet.push(mergedSet[i]);
     return uniqueMergedSet;
 }
-
