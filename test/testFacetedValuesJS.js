@@ -84,27 +84,53 @@ exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_Facete
  */
 exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassify(test){
     //console.log("printing test........."+test);
-    test.expect(3);
+    test.expect(4);
     var FacetedValue = FacetedValuesJS.FacetedValue;
     var Declassify = FacetedValuesJS.Declassify;
-    //console.log(Declassify+"0000000000000");
-    var dec = new Declassify();
-    var x = dec.createLabel();
+    var declassify = new Declassify();
+    console.log(declassify)
+    var x = declassify.createLabel();
     console.log("printing the curretn label value :  "+x+"   :");
-    var y = dec.createLabel();
+    var y = declassify.createLabel();
     console.log("printing the curretn label value :  "+y+"   :");
-    test.equal(x, 1);
-    test.equal(y, 2);
+    //test.equal(x, 1);
+    //test.equal(y, 2);
     var label=1;
-    var fvalue=new FacetedValue(1,"lol","not lol");
-    var defactedValue = dec.defacet(label,fvalue);
-    test.equal(defactedValue,"lol");
+    var fvalue=new FacetedValue(label,"secret","public");
+    var defactedValue = declassify.defacet(label,fvalue);
+    test.equal(defactedValue,"secret");
+    var label=new  declassify.createLabel();
+    var fvalue=new FacetedValue(label,"private","public");
+    var defactedValue = declassify.defacet(label,fvalue);
+    console.log("defacet value should be equal to private   "+defactedValue)
+    test.equal(defactedValue,"private");
+    var label1=new  declassify.createLabel();
+
+    var fvalue=new FacetedValue(label,"private","public");
+    var defactedValue = declassify.defacet(label1,fvalue);
+    console.log("defacet value should be equal to public   "+defactedValue)
+  
+    test.equal(defactedValue,"public");
     secret ="secret";
+    private ="private";
     public ="public";
-    var result= dec.mkDeclassifiable(secret,public);
+    var result= declassify.mkDeclassifiable(secret,public);
     var mkSecret = result[0];
     var declassification = result[1];   
     console.log("------------mkSecret--------================"+mkSecret(secret,public)); 
     console.log("-----------------declassification---================"+declassification(mkSecret));
+    console.log("test for tini");
+    fv_tini = declassify.tiniMkSecret(private,public);
+    console.log("output is :"+fv_tini.toString())
+    incorrectway= declassify.defacet(fv_tini.view,fv_tini); // so better to make defacet a function that cannot be called directly 
+    console.log("as defacet is accesible through defacet"+incorrectway);
+    console.log("test for declassify no restrictions");
+    var result1= declassify.declassifyNorestrictions(private, public);
+    console.log("faceted value:  "+ result1[0]);
+    console.log("value when labe is correct:  "+result1[1](result1[0]));
+    console.log("test for time based declassify");
+    var timbased_results = declassify.timebasedMkSecret(private, public);
+    console.log("results  "+timbased_results())
+    test.equal(timbased_results(),"private");
     test.done();
 };
