@@ -1,0 +1,36 @@
+k := newlabel();//var k = newcreatelabel()
+m := defacet (k, FacetedValue < k ? (b:=40) : (b:=30)>) //defacet(label, fvalue)
+
+k := new label();//var k = newcreatelabel()
+val := classify(k,10,20)//var x = '<A ? 42 : 0>';
+
+k := newlabel();//var k = newcreatelabel()
+p := 10;
+q := 20;
+m := classify(k, p, q)
+
+k := newlabel();//var k = newcreatelabel()
+m := defacet (k, Raw 30)//defacet(label, fvalue)
+
+k := newlabel();//var k = newcreatelabel()
+m := defacet (k, FacetedValue < k ? (b:=40) : (b:=30)>)//defacet(label, fvalue)
+
+k := newlabel();//var k = newcreatelabel()
+m := FacetedValue < k ? (20) : (30) >;
+defacet (k, m);//defacet(label, fvalue)
+
+l := newlabel();//var k = newcreatelabel()
+p := FacetedValue < k ? (40) : (60) >;
+defacet (k, p)//defacet(label, fvalue)
+
+l := newlabel();//var k = newcreatelabel()
+k := newlabel();//var k = newcreatelabel()
+m := defacet (k, FacetedValue < k ? (20) : (40)>);
+p := defacet (k, FacetedValue < k ? (FacetedValue < l? (80) : (90)>) : (100)>)//defacet(label, fvalue)
+
+k := new label() ; //var k = newcreatelabel()
+if !false then
+  m := defacet (k,Raw 20)//defacet(label, fvalue)
+else
+  skip
+endif
