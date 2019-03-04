@@ -1,14 +1,9 @@
 if (typeof module !== 'undefined')
     module.exports = Declassify;
 var FacetedValue = require('./FacetedValue.js');
-/**
- * 
- * 
- *
- * 
- * 
- * 
- */
+var sha256 = require('sha256');
+
+
 function Declassify(){
 //this.AUCTION_CLOSING_TIME=new Date(2018, 9, 21, 3, 0, 0, 0);
 //for now with complete date
@@ -19,10 +14,11 @@ function Declassify(){
 /**
  * @returns {ASTNode} - returns a node of type "FunctionDeclaration" or "FunctionExpression" which spawned this Scope
  */
-Declassify.prototype.createLabel = function createLabel(){
+Declassify.prototype.createLabel = function(){
     //this.counter= this.counter+1;
     //console.log("Declassify is being called and create new label invokedd......."+this.counter);
    // return this.counter;
+   return ;
 };
 
 Declassify.prototype.defacet = function defacet(label, fvalue){
@@ -81,7 +77,7 @@ Declassify.prototype.declassifyNorestrictions = function declassifyNorestriction
 	}
 	return [fv, defacetedValue];
 };
-//3
+//3 when based
 Declassify.prototype.timebasedMkSecret=function timebasedMkSecret(private, public){
 	var l = new this.createLabel();
 	var fv = new FacetedValue(l,private,public);
@@ -100,3 +96,20 @@ Declassify.prototype.timebasedMkSecret=function timebasedMkSecret(private, publi
 	return declassify;//[fv,declassify];
 };
 
+//Standarad library for crypto version --- pure javascript -- spidermonkey  -- crypto test SHA256
+//what based
+Declassify.prototype.hashPassword=function hashPassword(secret){
+    var label = new this.createLabel();
+    var makePwd= function(secret) {
+        return new FacetedValue(label,secret,"");
+    }
+    var hashPwd = function(secret) {
+        if(secret instanceof FacetedValue){
+            secret = new Declassify().defacet(label,secret);
+        }
+    
+    return sha256(secret);   
+    //return secret; 
+    }
+    return [makePwd,hashPwd];
+};

@@ -31,8 +31,8 @@ exports.testLanguage = {
         data=10;
         output=fl.assign(variable, data);
         console.log("output.......",output);
-        variable:'c';
-        data= new Object("");
+        variable='c';
+        data= new Object(""); // we can assign onlu specific data types 
         output=fl.assign(variable, data);
         console.log("output.......",output);
         test.done();

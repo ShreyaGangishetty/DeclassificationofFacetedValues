@@ -1,7 +1,7 @@
 if (typeof module !== 'undefined')
     module.exports = FacetedLanguage;
 var FacetedValue = require('./FacetedValue.js');
-var Declassify = require('./Declassify.js');
+var FacetedValuesJS = require('../src/FacetedValuesJS');
 /*
 type Variable = String
 type Label = String
@@ -105,13 +105,29 @@ evaluate (If e1 e2 e3) s = do
      (BoolVal False) -> evaluate e3 s1
      _ -> Left ("Non-boolean value"++" \'10\'"++ "used as a conditional")
 */
-//conditional expressions
+//conditional expressions if (FV<l?true:false>)
 FacetedLanguage.prototype.conditionalexps = function(exp1, exp2, exp3){
-  if(exp1) {
-    exp2;
+  if(exp1 instanceof FacetedValue) {
+    var Declassify = FacetedValuesJS.Declassify;
+    var declassify = new Declassify();
+    // how will i get the label here?
+    var defactedValue = declassify.defacet(exp1.view,exp1);
+    if(defactedValue){
+      //eval (exp2);  
+      console.log("working")
+    }
+    else {
+    //eval (exp3);
+    console.log("working else....")
   }
-  else {
-    exp3;
+  } 
+  else if(exp1 instanceof Boolean){//this.value){
+    if(exp1){
+      eval (exp2);  
+    }
+    else {
+    eval (exp3);
+  }
   }
 }
 

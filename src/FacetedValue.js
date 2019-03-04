@@ -113,7 +113,7 @@ FacetedValue.prototype.binaryOps = function binaryOps(operator, operand, operand
  */
 FacetedValue.prototype.unaryOps = function unaryOps(operator, operatorIsOnLeft) {
     var newLeft, newRight;
-
+    /// this one 
     function calculateLRBranch(lrValue){
         if (lrValue instanceof FacetedValue)
             return lrValue.unaryOps(operator, operatorIsOnLeft);
@@ -603,39 +603,3 @@ function evaluateConditional_helper(facetedBoolean, e_true, e_fals, thisArg, vie
     else
         return e_fals(view);
 }
-/**
-* @param {New Label}
-*/
-/*
-FacetedValue.prototype.newLabel = function newLabel(label){
-
-counter++;
-return counter+""; // global counter or something 
-
-}
-*/
-/*
-function mkDeclassifiable(secret,public){
-    let label = newLabel();
-    let mkSecret = function(secret,public){
-        return FacetedValue(label,secret,public);
-    }
-    let declassify = function(fv){
-        return defacet(label,fv);
-    }
-    return (mkSecret,declassify);
-}
-*/
-/*
-function defacet(label, fv) {
-    var result;
-    /// evaluate fv based on the label given fv has label1, gave label as input if both are equal show left value else show right value
-    if(label) {
-        result = fv.left;
-    }//label=== label1 left else right
-    else {
-        result = fv.right;
-    }
-    return result;
-}
-*/

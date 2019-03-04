@@ -1,5 +1,6 @@
 process.env.NODE_ENV = 'test';
 var FacetedValuesJS = require('../src/FacetedValuesJS');
+var FacetedLanguage = require('../src/FacetedLanguage');
 var fs = require('fs');
 
 exports.testFacetedValuesJS = {};
@@ -15,7 +16,7 @@ exports.testFacetedValuesJS = {};
  * nodeunit test that processes the input file using FacetedValuesJS
  * and compares it to the output file.
  */
-
+//create a test input and give an expected output in _output.js
 /**
  * @type {Array.<String>}
  */
@@ -69,6 +70,7 @@ exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_Facete
     //console.log("printing test........."+test);
     test.expect(1);
     var FacetedValue = FacetedValuesJS.FacetedValue;
+    console.log("in 1")
    // console.log(FacetedValue+"0000000000000");
     var expected = '<A ? <B ? 1 : 3> : <B ? 5 : 7>>';
     var actual = new FacetedValue("A",
@@ -83,8 +85,9 @@ exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_Facete
  * @param {NodeUnit} test
  */
 exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassify(test){
-    //console.log("printing test........."+test);
+    console.log("printing test........."+test);
     test.expect(4);
+    console.log("in 2")
     var FacetedValue = FacetedValuesJS.FacetedValue;
     var Declassify = FacetedValuesJS.Declassify;
     var declassify = new Declassify();
@@ -98,19 +101,19 @@ exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassi
     var label=1;
     var fvalue=new FacetedValue(label,"secret","public");
     var defactedValue = declassify.defacet(label,fvalue);
-    test.equal(defactedValue,"secret");
+    test.equal(defactedValue,"secret");//1
     var label=new  declassify.createLabel();
     var fvalue=new FacetedValue(label,"private","public");
     var defactedValue = declassify.defacet(label,fvalue);
     console.log("defacet value should be equal to private   "+defactedValue)
-    test.equal(defactedValue,"private");
+    test.equal(defactedValue,"private");//2
     var label1=new  declassify.createLabel();
 
     var fvalue=new FacetedValue(label,"private","public");
     var defactedValue = declassify.defacet(label1,fvalue);
     console.log("defacet value should be equal to public   "+defactedValue)
   
-    test.equal(defactedValue,"public");
+    test.equal(defactedValue,"public"); //3
     secret ="secret";
     private ="private";
     public ="public";
@@ -131,6 +134,25 @@ exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassi
     console.log("test for time based declassify");
     var timbased_results = declassify.timebasedMkSecret(private, public);
     console.log("results  "+timbased_results())
-    test.equal(timbased_results(),"private");
+    test.equal(timbased_results(),"private");//4
+    var hashpwd = declassify.hashPassword(secret);
+    var mkpwd = hashpwd[0](secret);
+    console.log("Facetd value make passwd  "+ mkpwd )
+    var hash = hashpwd[1](secret);
+    console.log("Hashed pwd for secret::: "+ hash);
+    //test.equal(hash,"hash");//4
+    hash = hashpwd[1](mkpwd);
+    console.log("Hashed pwd for facetedvalue::: "+ hash);
+
+    test.done();
+};
+
+exports.testFacetedValuesJS.testImport_FacetedLanguage = function testImport_FacetedLanguage(test){
+    console.log("printing FL testing test........."+test);
+    test.expect(0);
+    console.log("....................Faceted Language...............")
+    var flvr = new FacetedLanguage();
+
+    
     test.done();
 };

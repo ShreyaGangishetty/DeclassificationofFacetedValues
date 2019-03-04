@@ -46,6 +46,7 @@ function Builder(inputProgram) {
     this.performProcessingPhase(this.tree, prepForInformationFlows);
     this.performProcessingPhase(this.tree, linkIdentifiers);
     this.performProcessingPhase(this.tree, overlayInformationFlows);
+    console.log("Printing symbols list for overlayInformationFlows")
     this.performProcessingPhase(this.tree, markFaceting);
     this.performProcessingPhase(this.tree, this.refactorOperationsToBeFaceted);
 }
@@ -97,7 +98,7 @@ function checkNodeTypeCoverage(node){
         case 'Literal':
         //k = newlabel() this is like assignment expression so need to make changes in this case
         case 'AssignmentExpression':
-        //if that expression contains newlabel() function then just create that function and have a global incrementor
+        //if that expression contains newlabel() function then just create that function and have a global incrementor or a random string generator
         case 'BlockStatement':
         case 'ExpressionStatement':
         case 'NewExpression':
@@ -107,8 +108,9 @@ function checkNodeTypeCoverage(node){
         case 'ReturnStatement':
         case 'UnaryExpression':
         case 'VariableDeclaration':
+                console.log("Inside variable declarator 1")
         case 'VariableDeclarator':
-
+                console.log("Inside variable declaration 3")
         console.log("node type--------------------"+node.type);
             break;
         default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
@@ -147,6 +149,7 @@ function substituteFacetedValues(node){
  *
  * @param {ASTNode} node
  */
+ //pc
 Builder.prototype.overlayScoping = function overlayScoping(node){
     if (node.scope)
         return; // a little sloppy in terms of program flow, but node.scope may have already been set by performProcessingPhase a few lines below, and we don't want it overridden
@@ -165,6 +168,7 @@ Builder.prototype.overlayScoping = function overlayScoping(node){
     }
     else if (node.type === 'VariableDeclarator'){
     	// the variable for new label comes here
+        console.log("Inside variable declarator 4")
         this.currentScope.registerSymbol(node.id.name, node);
     }
 };
@@ -211,6 +215,8 @@ function linkIdentifiers(node){
  * @example function f(){return a;}; b = f(); // describes a flow from a to b
  * @param {ASTNode} node
  */
+//here also may be we need to support faceted language
+//pc
 function overlayInformationFlows(node){
     var i;
     switch (node.type){
@@ -257,10 +263,12 @@ function overlayInformationFlows(node){
             debugger;
             break;
         case 'VariableDeclarator':
+            console.log("Inside variable declarator 5")
             if (node.init)
                 node.init.outgoingFlows.push(node);
             break;
     }
+    console.log("inf over lay information flow :: node::  "+node +" outgoinggg::  "+ node.left.outgoingFlows);
 }
 
 /**
@@ -375,6 +383,7 @@ Builder.prototype.refactorOperationsToBeFaceted = function refactorOperationsToB
                 debugger;
                 break;
             case 'VariableDeclaration':
+            console.log("Inside variable declarator 2")
                 debugger;
                 break;
         }
