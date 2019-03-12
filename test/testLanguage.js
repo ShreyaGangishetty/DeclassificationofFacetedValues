@@ -8,7 +8,7 @@ exports.testLanguage = {
 
     /**
      * @param {NodeUnit} test
-     */
+     *//*
    testVal: function testVal(test){
         test.expect(1);
         //console.log("inside test value");
@@ -18,8 +18,8 @@ exports.testLanguage = {
         test.equal(val, 10);
         //console.log("inside test language");
         test.done();
-    },    
-
+    },  */  
+/*
     testAssign: function testAssign(test){
         test.expect(2);
         console.log("inside test assignment.......");
@@ -33,13 +33,13 @@ exports.testLanguage = {
         data=10;
         output=fl.assign(variable, data);
         //console.log("output.......",output);
-        test.equal(output, 10);
+        test.equal(output, 10);*/
         /*variable='c';
         data= new Object(""); // we can assign onlu specific data types 
         output=fl.assign(variable, data);
         console.log("output.......",output);*/
-        test.done();
-    },
+       /* test.done();
+    },*//*
      testVar: function testVar(test){
         test.expect(2);
         //console.log("inside test variable.......");
@@ -51,7 +51,7 @@ exports.testLanguage = {
         //console.log("output of variable when the value exists......", outVar)
         test.equal(outVar,"'assigned some value now'");
         test.done();
-    },
+    },*/
   /*  testVar: function testVar(test){
         test.expect(1);
         //console.log("inside test variable.......");
@@ -83,18 +83,18 @@ exports.testLanguage = {
         test.equal(condResult,false);
         /// this is not working ... need to fix this
         var fl = new FacetedLanguage();
-        //var vari = 'label';
-        //var data = true;
-        //fl.assign(vari, true);
-        //exp1 = "label===true";//cannot access label as dict_vars['label'] is present not 'label'
-        //exp1 = fl.binaryops("label",true,"===");
-        //exp2 = true;
-        //exp3 = false;
-        //var condRes = fl.conditionalexps(exp1, exp2, exp3);
-        //console.log("expected result is true.... output:"+condRes)
+        var vari = 'variable1';
+        var data = true;
+        fl.assign(vari, true);//new Object()
+       //exp1 = "variable1===true";//cannot access label as dict_vars['label'] is present not 'label'
+        exp1 = fl.binaryops("variable1",true,"===");
+        exp2 = true;
+        exp3 = false;
+        var condRes = fl.conditionalexps(exp1, exp2, exp3);
+        console.log("expected result is true.... output:"+condRes)
         test.done()
     },
-    
+    /*
     testbinaryops: function testbinaryops(test){
         test.expect(1);
         var fl = new FacetedLanguage();
@@ -106,8 +106,8 @@ exports.testLanguage = {
         console.log("result....... "+ result);
         test.equal(result, 30);
         test.done();
-    },
-    
+    },*/
+    /*
     testconditionalexpsASTQ: function testconditionalexpsASTQ(test){
         test.expect(1);
         console.log("inside test conditional expressions");
@@ -125,17 +125,17 @@ exports.testLanguage = {
         //console.log("expected result is true.... output:"+condRes)
         test.equal(condRes,true);
         test.done();
-    },
-    
+    },*/
+  /*  
     testcreatelabelFV: function testcreatelabelFV(test){
         test.expect(0);
         var fl = new FacetedLanguage();
         var label =  fl.createlabelFV();
         console.log("label....."+label)
         test.done();
-    },
+    },*/
     
-    testclassifyasFV: function testclassifyasFV(test){
+  /*  testclassifyasFV: function testclassifyasFV(test){
         test.expect(0);
         var fl = new FacetedLanguage();
         var label =  fl.createlabelFV();
@@ -143,7 +143,7 @@ exports.testLanguage = {
         console.log("fv...."+fv)
         //test.equal(fv, new FacetedValue(label,"private","public"))
         test.done();
-    },            
+    },   */         
 
 };
 

@@ -83,6 +83,7 @@ FacetedLanguage.prototype.assign = function(vari, data, pc){
     else{
         //this.variable(variable);
         dictionary_vars[vari] =  data;
+        console.log("in assign......."+dictionary_vars[vari]+".... for variablllee..."+vari)
     /// need to change this and return only the required variable or something
     return dictionary_vars[vari] ;//dictionary_vars; 
     }
@@ -152,8 +153,13 @@ evaluate (Op o e1 e2) s = do
 //binary operators --- +, -, *, /, >=, <=, <, >
 // binaryops(val1,op, val2)
 FacetedLanguage.prototype.binaryops = function(exp1, exp2, op){
+  console.log("------------------in binary ops---------------")
+  console.log("here it come:  "+evaluate(exp1));
   val1 = evaluate(exp1);//exp1;
+  console.log("expected value is true for val1"+ val1);
+
   val2 = evaluate(exp2);//exp2;
+  console.log("expected value is true for val2"+ val2);
   //check if its a string.... look up for the variable if exists
   var result;
   if(typeof(this.value(val1)) == "number" && typeof(this.value(val2)) =="number"){
@@ -288,6 +294,7 @@ function evaluate(expression){
   //checkNodeTypeCoverage(parsedEsprima);
   //fvj.checkNodeTypeCoverage();
   parsedEsprima.body.forEach(function(element) {
+    console.log("calling.......1.22.33")
         //element= substituteFacetedValues(element);
         switch(element.type){
          
@@ -302,8 +309,9 @@ function evaluate(expression){
                     if(element.expression.type === 'Identifier'){
                         if(element.expression.name != null || element.expression.name != undefined ){
                           console.log("hellooo...... found something which might be useful");
-                          var value = dictionary_vars[element.expression.name]
-                          return value;
+                          expression = dictionary_vars[element.expression.name];
+                          //console.log("the value of variable "+"....."+element.expression.name+"......=..."+value);
+                          //return value;
                         }
                         else{
                           evaluate(element.expression);
@@ -327,7 +335,7 @@ function evaluate(expression){
             default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
         }
     }, this);
-
+  console.log("this is coming always here irrespective of above return statements");
   //for each node in ast
         //check if its assignment operator, identifier, function etc and redirect to its corresponding function call of faceted value
   return expression;
