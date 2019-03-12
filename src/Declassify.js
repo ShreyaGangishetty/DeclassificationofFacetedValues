@@ -8,30 +8,31 @@ function Declassify(){
 //this.AUCTION_CLOSING_TIME=new Date(2018, 9, 21, 3, 0, 0, 0);
 //for now with complete date
 //new Date(year, month, day, hours, minutes, seconds, milliseconds);
-
+//this.counter=0;
 }
 
 /**
  * @returns {ASTNode} - returns a node of type "FunctionDeclaration" or "FunctionExpression" which spawned this Scope
  */
 Declassify.prototype.createLabel = function(){
-    //this.counter= this.counter+1;
+  //  this.counter= this.counter+1;
     //console.log("Declassify is being called and create new label invokedd......."+this.counter);
    // return this.counter;
-   return ;
+   //return this.counter;
+   return {}; //new Object();
 };
 
 Declassify.prototype.defacet = function defacet(label, fvalue){
-    console.log("--------------------Invoking DEFACET--------------------");
-    console.log("........label............"+label+"   ....");
-    console.log("........faceted Value............"+fvalue+"   ....");
+    //console.log("--------------------Invoking DEFACET--------------------");
+    //console.log("........label............"+label+"   ....");
+    //console.log("........faceted Value............"+fvalue+"   ....");
     var result;
     if(fvalue instanceof FacetedValue) {
         var fview = fvalue.view;
         console.log("...................VIEW or label of FV........"+fview);
         if(fview===label){
-            console.log("another step closer");
-            console.log("...................VIEW or label of FV........"+fvalue);
+            //console.log("another step closer");
+          //  console.log("...................VIEW or label of FV........"+fvalue);
             result = fvalue.leftValue;
         }
         else {

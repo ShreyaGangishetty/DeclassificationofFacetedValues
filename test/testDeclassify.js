@@ -1,6 +1,6 @@
 process.env.NODE_ENV = 'test';
 var FacetedValuesJS = require('../src/FacetedValuesJS');
-var Declassify = require('../src/FacetedValuesJS');//FacetedValuesJS.Declassify;
+var Declassify = require('../src/Declassify.js');//FacetedValuesJS.Declassify;
 var FacetedValue = require('../src/FacetedValue');
 // noinspection JSUnusedGlobalSymbols
 exports.testdeclassify = {
@@ -18,10 +18,13 @@ exports.testdeclassify = {
         test.done();
     },
 
-   /* defacet: function defacet(test){
+    defacet: function defacet(test){
         test.expect(0);
-        label = Declassify.createLabel;
-        fvalue = new FacetedValue(Declassify.createLabel,true,false);
+        var dec = new Declassify();
+        label = dec.createLabel();
+        console.log(typeof(label))
+        console.log(label)
+        fvalue = new FacetedValue(label,true,false);
         console.log(fvalue)
         console.log(label+ "from second function" );
         //fvalue = new FacetedValue(label,true,false);
@@ -30,5 +33,5 @@ exports.testdeclassify = {
         console.log("inside Declassify test ");
         test.done();
     }
-    */
+   
 };

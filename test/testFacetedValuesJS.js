@@ -50,7 +50,7 @@ testBattery.forEach(function testBattery(testName){
 
 /**
  * @param {NodeUnit} test
- */
+ *//*
 exports.testFacetedValuesJS.testImport_Cloak = function testImport_Cloak(test){
     test.expect(2);
     var Cloak = FacetedValuesJS.Cloak;
@@ -62,10 +62,10 @@ exports.testFacetedValuesJS.testImport_Cloak = function testImport_Cloak(test){
     test.notEqual(x, 11);
     test.done();
 };
-
+*/
 /**
  * @param {NodeUnit} test
- */
+ *//*
 exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_FacetedValue(test){
     //console.log("printing test........."+test);
     test.expect(1);
@@ -80,7 +80,7 @@ exports.testFacetedValuesJS.testImport_FacetedValue = function testImport_Facete
     test.equal(actual, expected);
     test.done();
 };
-
+*/
 /**
  * @param {NodeUnit} test
  */
@@ -102,7 +102,8 @@ exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassi
     var fvalue=new FacetedValue(label,"secret","public");
     var defactedValue = declassify.defacet(label,fvalue);
     test.equal(defactedValue,"secret");//1
-    var label=new  declassify.createLabel();
+    var label=new  declassify.createLabel(2);
+    console.log("...... new label 2"+label)
     var fvalue=new FacetedValue(label,"private","public");
     var defactedValue = declassify.defacet(label,fvalue);
     console.log("defacet value should be equal to private   "+defactedValue)
@@ -146,7 +147,7 @@ exports.testFacetedValuesJS.testImport_Declassify = function testImport_Declassi
 
     test.done();
 };
-
+/*
 exports.testFacetedValuesJS.testImport_FacetedLanguage = function testImport_FacetedLanguage(test){
     console.log("printing FL testing test........."+test);
     test.expect(0);
@@ -155,4 +156,4 @@ exports.testFacetedValuesJS.testImport_FacetedLanguage = function testImport_Fac
 
     
     test.done();
-};
+};*/

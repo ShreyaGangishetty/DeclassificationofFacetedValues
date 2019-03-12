@@ -1,31 +1,14 @@
+var astq = require("ast-query");
 if (typeof module !== 'undefined')
     module.exports = FacetedLanguage;
 var FacetedValue = require('./FacetedValue.js');
+//var FacetedValuesJS = require('./FacetedValuesJS.js');
 var FacetedValuesJS = require('../src/FacetedValuesJS');
-/*
-type Variable = String
-type Label = String
+var Declassify = require('../src/Declassify.js')
+var esprima = require("esprima");
 
-type ErrorMsg = String
 
-type Store = Map Variable Value
-type FLabel = String
-type Raw = String
 
-data Expression =
-    Var Variable                            -- x
-  | Val Value                               -- v
-  | Assign Variable Expression              -- x := e
-  | Sequence Expression Expression          -- e1; e2
-  | Op Binop Expression Expression
-  | Unop Expression                         
-  | NewLabel -- Expression            
-  | Defacet Expression Expression
-  | If Expression Expression Expression     -- if e1 then e2 else e3 endif
-  | Classify Expression Expression Expression  -- facet(label,data1,data2)
- */
-
-/// testing
 function FacetedLanguage() {
   dictionary_vars=[];
 }
@@ -46,13 +29,22 @@ FacetedLanguage.prototype.value = function(value){
     return value;
     }
     else if(typeof value === "boolean"){
+     
         return value;
     }
     else if(typeof value === "string"){
+     
         return value;
     }
+    else if(value instanceof FacetedValue){
+     
+      return value;
+    }
     else {
-        console.log("unsupported type"); // trhow error
+      errorMsg = "unsupported data type : Only number, boolean, string and Faceted values are allowed";
+        console.log(errorMsg); // throw error
+        throw(errorMsg);
+        return "undefined";
     }
 }
 
@@ -62,20 +54,37 @@ evaluate (Assign x e) s = do
    (expVal, s1) <- evaluate e s
    return (expVal,Map.insert x expVal s1)
 */
-FacetedLanguage.prototype.assign = function(variable, data){
-    //need to add conditions on what variable can be
-    console.log(variable)
-    //dictionary_vars.push({variable : data})
-    /// add more conditions or check ... need to think 
-    if(typeof this.value(data) === 'undefined' || this.value(data) === null){
-        console.log("data error");
-        //trhow exception
+FacetedLanguage.prototype.assign = function(vari, data, pc){
+
+
+    vari =vari.trim();
+    data = evaluate(data);
+    //key words in JS are not variable names abstract    else    instanceof    super  boolean   enum    int   switch
+    key_words = ['abstract',  'else', 'instanceof', 'super', 'boolean','enum', 'int','switch'];
+
+    if (key_words.indexOf(vari) >= 0) {
+        errorMsg="reserved keywords cannot be used as variable names";
+        throw(errorMsg);
+    }
+    //TO DO check if the regex is correct-- ask nivi
+    else if(vari.startsWith("[_\$a-zA-Z]+")){
+      //console.log("inside assign funciton....");
+      //console.log("variable name:::"+vari);
+        errorMsg ="variable should start with a underscore or a letter or a $ symbol";
+        throw(errorMsg);
+    } 
+    //console.log("value...."+data)
+    if(typeof this.value(data) === 'undefined' || data === null){
+        // for now we cannot assign null to the data
+        errorMsg = "cannot assign "+this.value(data)+ "please check the data type";
+        //console.log("data error");
+        throw(errorMsg);
     }
     else{
         //this.variable(variable);
-        dictionary_vars[variable] =  data;
+        dictionary_vars[vari] =  data;
     /// need to change this and return only the required variable or something
-    return dictionary_vars; 
+    return dictionary_vars[vari] ;//dictionary_vars; 
     }
 }
 /*
@@ -88,14 +97,12 @@ evaluate (Var x) s = do
 //variable
 FacetedLanguage.prototype.variable = function(varname){
     if (!(varname in dictionary_vars)){
-        dictionary_vars[varname]=undefined;
-        console.log("new variable created");
-
+        //check if varname exists in dictionary... if not throw an error
+       errorMsg ="key not found in dictionary";
+       throw(errorMsg);
     }  
-    //252 proj we wrote key not found we didnt add the variable to map
     return dictionary_vars[varname];
 }
-
 /*
 --if e1 then e2 else e3
 evaluate (If e1 e2 e3) s = do
@@ -105,47 +112,35 @@ evaluate (If e1 e2 e3) s = do
      (BoolVal False) -> evaluate e3 s1
      _ -> Left ("Non-boolean value"++" \'10\'"++ "used as a conditional")
 */
-//conditional expressions if (FV<l?true:false>)
+//conditional expressions e1 e2 e3 .... if (e1) then e2 else e3
 FacetedLanguage.prototype.conditionalexps = function(exp1, exp2, exp3){
-  if(exp1 instanceof FacetedValue) {
-    var Declassify = FacetedValuesJS.Declassify;
-    var declassify = new Declassify();
-    // how will i get the label here?
-    var defactedValue = declassify.defacet(exp1.view,exp1);
-    if(defactedValue){
-      //eval (exp2);  
-      console.log("working")
-    }
-    else {
-    //eval (exp3);
-    console.log("working else....")
+  //tree = astq(exp1);
+  //parsedEsprima = esprima.parse(exp1)
+  //console.log("exp1:..."+exp1);
+  //console.log("parsed code: .....")
+  //console.log(parsedEsprima.body);
+  //tree.body.foreach()
+  //console.log("................treee...."+tree.body+"..............................");
+  value = evaluate(exp1);//eval(exp1); 
+  /*
+  exp1 = fl.binaryops(fl.facetedvalue(),2,+);
+  exp1 = 3
+  */  
+  console.log("the evaluated value shoud be truee......"+ value)
+  if(typeof(value) !== "boolean"){
+    errorMsg="only boolean is accepted";
+    throw(errorMsg);
   }
-  } 
-  else if(exp1 instanceof Boolean){//this.value){
-    if(exp1){
-      eval (exp2);  
-    }
-    else {
-    eval (exp3);
+  if(value) {
+    valueate = evaluate(exp2);//eval(exp2);
+    return valueate;
   }
+  else{
+
+    valueate = evaluate(exp3)//eval(exp3);
+    return valueate;
   }
 }
-
-/*
---Sequence
-evaluate (Sequence e1 e2) s = do
-   (v1,s1)   <- evaluate e1 s
-   (v2,s2)  <- evaluate e2 s1
-   return (v2, s2)
-*/
-//sequence
-FacetedLanguage.prototype.sequence = function(exp1, exp2){
-//execute exp1
-//execute exp2
-//return value of exp2  
-}
-
-
 /*
 evaluate :: Expression -> Store -> Either ErrorMsg (Value, Store)
 evaluate (Op o e1 e2) s = do
@@ -155,10 +150,39 @@ evaluate (Op o e1 e2) s = do
   return (v, s')
 */
 //binary operators --- +, -, *, /, >=, <=, <, >
-FacetedLanguage.prototype.binaryops = function(value){
-  
+// binaryops(val1,op, val2)
+FacetedLanguage.prototype.binaryops = function(exp1, exp2, op){
+  val1 = evaluate(exp1);//exp1;
+  val2 = evaluate(exp2);//exp2;
+  //check if its a string.... look up for the variable if exists
+  var result;
+  if(typeof(this.value(val1)) == "number" && typeof(this.value(val2)) =="number"){
+    switch(op){
+      case '*': result = val1 * val2; break;
+      case '/': result = val1 / val2; break;
+      case '+': result = val1 + val2; break;
+      case '-': result = val1 - val2; break;
+      case '>': result = val1 > val2; break;
+      case '<': result = val1 < val2; break;
+      case '>=': result = val1 >= val2; break;
+      case '<=': result = val1 <= val2; break;
+      default : errorMsg = " binary operator not supported"; throw (errorMsg);
+    }
+  }
+  else if(typeof(this.value(val1)) == "boolean" && typeof(this.value(val2)) =="boolean"){
+  switch(op){
+      case '&&': result = val1 && val2; break;
+      case '||': result = val1 || val2; break;
+      case '===': result = val1 === val2; break;
+      default : errorMsg = " binary operator not supported"; throw (errorMsg);
+    }
+  }
+  else {
+    errorMsg = "only boolean or numbers are allowed";
+    throw(errorMsg);
+    }
+    return result;
 }
-
 /*
 evaluate (Unop e) s = do
       (v1,s') <- evaluate e s
@@ -166,10 +190,24 @@ evaluate (Unop e) s = do
       return (v, s')  
 */
 //unary operator !, ++, --
-FacetedLanguage.prototype.unaryops = function(value){
-  
+FacetedLanguage.prototype.unaryops = function(exp, op){
+  val1 = evaluate(exp);//exp;
+  var result;
+  if(this.value(val1) != "undefined"){  
+    switch(op){
+      case '!': result = !val1; break;
+      case '~': result = ~val1; break;
+      case '+': result = +val1; break;
+      case '-': result = -val1; break;
+      case '++': result = ++val1; break;// conditions only if its a number etc.. needs to be added
+      case '--': result = --val1; break;
+      //case 'typeof': result = typeof(val1); break;
+      //case 'delete': result = delete val1; break;
+      default : errorMsg = "unary operator not supported"; throw (errorMsg);
+    } 
+    return result;
 }
-
+}
 /*
 -- evaluating for new label
 
@@ -177,6 +215,9 @@ evaluate NewLabel s = Right (Label (show (1+ (Map.size s))) , s)--(Map.size s)
 */
 //creates a label
 FacetedLanguage.prototype.createlabelFV = function(value){
+    var dec = new Declassify();
+    value = dec.createLabel();
+    return value;
   
 }
 /*
@@ -187,13 +228,17 @@ evaluate (Classify  k e1 e2) s = do
     return ((FacetedValue v (Val v1) (Val v2)), s)
 */
 //classify(e,e)
-FacetedLanguage.prototype.classifyasFV = function(value){
-  
+FacetedLanguage.prototype.classifyasFV = function(exp1,exp2,exp3){
+ var label = exp1;//evaluate(exp1);... here it is an undefined value
+ var private = evaluate(exp2);
+ var public = evaluate(exp3);
+ var fv = new FacetedValue(label, private, public);
+ return fv;
 }
 // need to call recursively
-FacetedLanguage.prototype.evaluate = function(){
+//FacetedLanguage.prototype.evaluate = function(){
     //eval or something
-}
+//}
 /*
 --declassify :: Label -> Value -> Store -> Either String (Value,Store)
 declassify :: Label -> Value -> Store -> Either ErrorMsg (Value, Store)
@@ -211,18 +256,88 @@ evaluate (Defacet e1 e2) s = do
 */
 //defacet(e,e)
 FacetedLanguage.prototype.declassifyFV = function(value){
-  
+    var declassify = new Declassify();
+    if(value instanceof FacetedValue){
+        var leftValue= evaluate(expression.leftValue)
+        var rightValue=evaluate(expression.rightValue)
+        var defactedValue = declassify.defacet(expression.view,new FacetedValue(expression.view,leftValue,rightValue));
+        value = dec.declassify(value.view,);
+    }
+    return value;
 }
 //functions
 FacetedLanguage.prototype.defineFunctions = function(value){
   
 }
+function evaluate(expression){
+  if(expression instanceof FacetedValue){
+    var declassify = new Declassify();
+    leftValue= evaluate(expression.leftValue)
+    rightValue=evaluate(expression.rightValue)
+    var defactedValue = new FacetedLanguage().declassifyFV(declassify.view,new FacetedValue(expression.view,leftValue,rightValue));
+    return value;
+  }
+  else{
+  parsedEsprima = esprima.parse(expression)
+  }
+  console.log("expression:..."+expression);
+  console.log("parsed code: .....")
+  console.log(parsedEsprima.body);
+  /////
+  
+  //checkNodeTypeCoverage(parsedEsprima);
+  //fvj.checkNodeTypeCoverage();
+  parsedEsprima.body.forEach(function(element) {
+        //element= substituteFacetedValues(element);
+        switch(element.type){
+         
+            case 'BinaryExpression':
+            case 'CallExpression':
+            case 'FunctionDeclaration':
+            case 'FunctionExpression':
+            case 'Literal':
+            case 'AssignmentExpression':
+            case 'BlockStatement':
+            case 'ExpressionStatement':
+                    if(element.expression.type === 'Identifier'){
+                        if(element.expression.name != null || element.expression.name != undefined ){
+                          console.log("hellooo...... found something which might be useful");
+                          var value = dictionary_vars[element.expression.name]
+                          return value;
+                        }
+                        else{
+                          evaluate(element.expression);
+                          //need to change and test this case
+                          console.log(" hello its undefinedd")
+                        }
+                        }
+                    else if(element.expression.type === 'Literal'){
+                      return element.expression.value;
+                    }
+                        break;
+            case 'NewExpression':
+            case 'Identifier':
+            case 'IfStatement':
+            case 'MemberExpression': 
+            case 'ReturnStatement':
+            case 'UnaryExpression':
+            case 'VariableDeclaration':
+            case 'VariableDeclarator':
+                  break;
+            default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
+        }
+    }, this);
+
+  //for each node in ast
+        //check if its assignment operator, identifier, function etc and redirect to its corresponding function call of faceted value
+  return expression;
+}
 /*
-Facetedlanguage.prototype.num = function(){
+Facetedlanguage.prototype.num = {
 new(n) { return {__proto__: this, n} ;},
 eval() { return this.n }
- }*/
-/*
+ }
+
 //Example: var e2 = plus.new(num.new(1), num.new(2)); e2.eval() //: 3
 Facetedlanguage.prototype.plus = {
 new(l, r) { return {__proto__: this, l, r} },
@@ -232,47 +347,4 @@ eval() { return this.l.eval() + this.r.eval() } }
 num.show = function() { return this.n.toString() }
 plus.show = function() {
 return this.l.show() + ’+’ + this.r.show() }
-*/
- /*FacetedLanguage.prototype.binaryOp = function binaryOp(val1 , val2, operator){
-    var result;
-    switch (operator){
-        case '*':
-            //result=val1*val2;// in this recursively check if val1 is FV then go until the raw value is obtained
-            result=multiply(val1, val2);
-            break;
-        case '/':
-            result=val1/val2;
-            break;
-        case '+':
-            result=val1+val2;
-            break;
-        case '-':
-            result=val1-val2;
-            break;
-
-    }
-return (val1+val2);
-};
-
-function multiply(val1, val2){
-
-if(!(val1 instanceof(FacetedValue) ) && !(val2 instanceof(FacetedValue))){
-    return val1*val2;
-}
-else if((val1 instanceof(FacetedValue) ) && (val2 instanceof(FacetedValue))){
-    multiply(Declassify.defacet(val1.view, val1),Declassify.defacet(val2.view, val2));
-}
-
-else if((val1 instanceof(FacetedValue) ) && !(val2 instanceof(FacetedValue))){
-    multiply(Declassify.defacet(val1.view, val1),val2);
-    //recurisive call until a raw value
-}
-else if(!(val1 instanceof(FacetedValue) ) && (val2 instanceof(FacetedValue))){
-    multiply(val1, Declassify.defacet(val2.view, val2));
-}
-else{
-    console.log("throw errorr")
-}
-}
-// similarly for other binary ops
 */

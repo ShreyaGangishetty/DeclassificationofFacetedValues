@@ -34,6 +34,7 @@ function Builder(inputProgram) {
      */
     console.log("....................Inside builder(inputprogram function)");
     this.tree = astq(inputProgram);
+    console.log("....tree..."+this.tree);
     //console.log("Tree------------------------------"+this.tree);// error
     this.currentScope = new Scope();
     //console.log("scope variable printing"+this.currentScope);
@@ -108,10 +109,10 @@ function checkNodeTypeCoverage(node){
         case 'ReturnStatement':
         case 'UnaryExpression':
         case 'VariableDeclaration':
-                console.log("Inside variable declarator 1")
+                //console.log("Inside variable declarator 1")
         case 'VariableDeclarator':
-                console.log("Inside variable declaration 3")
-        console.log("node type--------------------"+node.type);
+                //console.log("Inside variable declaration 3")
+        //console.log("node type--------------------"+node.type);
             break;
         default: throw new Error('substituteFacetedValues does not yet accommodate Node.type="' + node.type + '"');
     }
@@ -497,3 +498,4 @@ function mergeSets(listOfSets){
             uniqueMergedSet.push(mergedSet[i]);
     return uniqueMergedSet;
 }
+

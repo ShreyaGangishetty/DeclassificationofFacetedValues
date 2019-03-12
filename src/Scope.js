@@ -22,8 +22,7 @@ function Scope(owner, parent){
      * @type {Object.<string,ASTNode>}
      * @private
      */
-    this._symbols = {};
-
+    this._symbols = {}; 
     /**
      * If this is null, then this is the program-level scope
      * @type {Scope}
